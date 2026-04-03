@@ -20,7 +20,9 @@ export function AmenityIcon({
     <div
       className={cn(
         "group flex flex-col items-center text-center p-4 cursor-default",
-        "hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-xl transition-colors duration-200",
+        "rounded-2xl transition-all duration-300",
+        "hover:bg-white dark:hover:bg-slate-800/80",
+        "hover:shadow-lg hover:shadow-orange-500/5 hover:-translate-y-1",
         className
       )}
     >
@@ -28,13 +30,14 @@ export function AmenityIcon({
         className={cn(
           "w-14 h-14 rounded-2xl flex items-center justify-center mb-3",
           "bg-gradient-to-br from-orange-500/10 to-amber-500/10",
-          "group-hover:from-orange-500/20 group-hover:to-amber-500/20",
-          "transition-all duration-300"
+          "group-hover:from-orange-500 group-hover:to-amber-500",
+          "group-hover:shadow-lg group-hover:shadow-orange-500/25",
+          "transition-all duration-500"
         )}
       >
-        <Icon className="w-7 h-7 text-orange-600 dark:text-orange-400" />
+        <Icon className="w-7 h-7 text-orange-600 dark:text-orange-400 group-hover:text-white transition-colors duration-500" />
       </div>
-      <span className="font-medium text-slate-900 dark:text-white text-sm">
+      <span className="font-semibold text-slate-900 dark:text-white text-sm">
         {label}
       </span>
       {description && (

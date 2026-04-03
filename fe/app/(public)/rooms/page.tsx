@@ -3,9 +3,8 @@
 import { useState, useMemo } from "react";
 import { RoomTypeCard } from "@/components/features/room-type-card";
 import { RoomFilters, RoomFilterValues } from "@/components/features/room-filters";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { BedDouble, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { BedDouble, Search, Sparkles } from "lucide-react";
 
 const MOCK_ROOMS = [
   {
@@ -122,14 +121,22 @@ export default function RoomsPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Hero Header */}
-      <section className="relative py-16 bg-gradient-to-br from-orange-500 to-amber-500">
-        <div className="absolute inset-0 bg-black/10" />
+      <section className="relative py-20 bg-gradient-to-br from-orange-500 via-orange-500 to-amber-500 overflow-hidden">
+        <div className="absolute inset-0 bg-black/5" />
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3" />
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center text-white">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-md">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Đa dạng lựa chọn
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-md tracking-tight">
               Khám phá các loại phòng
             </h1>
-            <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto leading-relaxed">
               Lựa chọn không gian nghỉ ngơi hoàn hảo cho kỳ nghỉ của bạn
             </p>
           </div>
@@ -147,10 +154,12 @@ export default function RoomsPage() {
           {/* Room Types Grid */}
           <div className="lg:col-span-3">
             {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <BedDouble className="h-5 w-5 text-orange-500" />
-                <span className="text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+                  <BedDouble className="h-5 w-5 text-orange-500" />
+                </div>
+                <span className="text-slate-600 dark:text-slate-400 font-medium">
                   {filteredRoomTypes.length} loại phòng
                 </span>
               </div>
@@ -158,12 +167,14 @@ export default function RoomsPage() {
 
             {/* Empty State */}
             {filteredRoomTypes.length === 0 && (
-              <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl shadow-lg">
-                <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-5">
+                  <Search className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">
                   Không tìm thấy phòng phù hợp
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                   Hãy thử điều chỉnh bộ lọc để tìm kiếm kết quả khác
                 </p>
               </div>
