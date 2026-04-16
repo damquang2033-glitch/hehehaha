@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Heart,
 } from "lucide-react";
+import Image from "next/image";
 
 const FEATURES = [
   {
@@ -355,10 +356,12 @@ export default function HomePage() {
                 className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 bg-white dark:bg-slate-800 rounded-2xl cursor-pointer hover:-translate-y-2"
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
+                  <Image
                     src={room.image}
                     alt={room.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   {/* Gradient overlay on hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
