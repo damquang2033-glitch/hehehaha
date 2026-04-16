@@ -15,6 +15,7 @@ model User {
   avatar       String?
   role         Role     @default(GUEST)
   refreshToken String?
+  listings     Listing[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -25,4 +26,17 @@ enum Role {
   GUEST
   HOST
   ADMIN
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Decimal
+  location    String
+  images      String[]
+  hostId      String
+  host        User     @relation(fields: [hostId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

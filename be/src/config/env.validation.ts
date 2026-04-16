@@ -21,15 +21,15 @@ class EnvironmentVariables {
   PORT: number = 3001;
 
   @IsString()
-  DATABASE_URL: string;
+  DATABASE_URL!: string;
 
   @IsString()
   @MinLength(32)
-  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_SECRET!: string;
 
   @IsString()
   @MinLength(32)
-  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_SECRET!: string;
 
   @IsString()
   JWT_ACCESS_EXPIRES_IN: string = '15m';
