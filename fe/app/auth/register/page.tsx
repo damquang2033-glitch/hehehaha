@@ -1,24 +1,66 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Loader2, Github } from "lucide-react";
+import { authApi } from "@/features/auth/api/authApi";
+import { useAuthStore } from "@/stores/authStore";
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
+    email: z.string().email("Email không hợp lệ"),
+    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsLoading(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const onSubmit = async (values: RegisterFormValues) => {
+    setServerError("");
+    try {
+      const data = await authApi.register({
+        email: values.email,
+        password: values.password,
+        name: values.name,
+      });
+      setAuth(data.user, data.accessToken, data.refreshToken);
+      toast.success("Đăng ký thành công! Chào mừng bạn đến với Stayzy.");
+      router.push("/");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "Đăng ký thất bại. Vui lòng thử lại.";
+      setServerError(message);
+    }
   };
 
   return (
@@ -31,24 +73,28 @@ export default function RegisterPage() {
       </div>
 
       <div className="grid gap-6">
-        {error && (
+        {serverError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="fullName">Họ và tên</Label>
+              <Label htmlFor="name">Họ và tên</Label>
               <Input
-                id="fullName"
+                id="name"
                 placeholder="Nguyễn Văn A"
                 type="text"
                 autoCapitalize="words"
                 autoComplete="name"
-                disabled={isLoading}
+                disabled={isSubmitting}
+                {...register("name")}
               />
+              {errors.name && (
+                <p className="text-xs text-destructive">{errors.name.message}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -59,19 +105,12 @@ export default function RegisterPage() {
                 type="email"
                 autoCapitalize="none"
                 autoComplete="email"
-                disabled={isLoading}
+                disabled={isSubmitting}
+                {...register("email")}
               />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Số điện thoại (tùy chọn)</Label>
-              <Input
-                id="phone"
-                placeholder="0123456789"
-                type="tel"
-                autoComplete="tel"
-                disabled={isLoading}
-              />
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -82,20 +121,20 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   autoCapitalize="none"
                   autoComplete="new-password"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
+                  {...register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -106,24 +145,24 @@ export default function RegisterPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   autoCapitalize="none"
                   autoComplete="new-password"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
+                  {...register("confirmPassword")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Đăng ký
             </Button>
           </div>

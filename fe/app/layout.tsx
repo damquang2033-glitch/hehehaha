@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 import { LayoutWrapper } from "@/components/common/layout-wrapper";
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: {
@@ -20,8 +21,10 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LayoutWrapper>{children}</LayoutWrapper>
-          <Toaster richColors position="bottom-right" />
+          <Providers>
+            <LayoutWrapper>{children}</LayoutWrapper>
+            <Toaster richColors position="bottom-right" />
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

@@ -2,6 +2,9 @@
 
 > **Lưu ý cho AI:** Đọc toàn bộ file này trước khi lập bất kỳ kế hoạch nào.
 > Không được tự ý thay đổi tech stack, folder structure, hoặc coding convention.
+>
+> **QUAN TRONG:** Luôn đọc `PROGRESS.md` ở root project trước khi bắt đầu task bất kỳ.
+> File đó là nguồn sự thật về những gì đã làm và chưa làm.
 
 ---
 
@@ -47,7 +50,13 @@
 - **State management:** Zustand (nếu cần global state)
 - **Data fetching:** TanStack Query (React Query)
 - **Form:** React Hook Form + Zod validation
-- **Folder chính:** `fe/src/`
+- **Folder chính:** `fe/` (không dùng `fe/src/` – đã chốt giữ cấu trúc hiện tại)
+  - Pages: `fe/app/`
+  - Components: `fe/components/` (ui/, common/, features/)
+  - Utilities: `fe/lib/`
+  - Feature logic: `fe/features/` (tạo mới khi cần)
+  - Stores: `fe/stores/` (tạo mới khi cần)
+  - Types: `fe/types/` (tạo mới khi cần)
 
 ### Backend (`be/`)
 - **Language:** TypeScript (strict mode)
