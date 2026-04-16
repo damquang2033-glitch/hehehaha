@@ -1,12 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
+import { authApi } from "@/features/auth/api/authApi";
+import { toast } from "sonner";
 
 const NAV_LINKS = [
   { href: "/", label: "Trang chủ" },
@@ -15,10 +27,30 @@ const NAV_LINKS = [
   { href: "/contact", label: "Liên hệ" },
 ];
 
+// Generate a deterministic avatar URL from user id/email using DiceBear
+function getAvatarUrl(seed: string) {
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1f4d4,ffd5dc,ffdfbf`;
+}
+
+function getInitials(name?: string | null, email?: string | null) {
+  if (name) {
+    return name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
+  return (email?.[0] ?? "?").toUpperCase();
+}
+
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const { isAuthenticated, user, clearAuth } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -30,6 +62,20 @@ export function Navbar() {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // ignore API errors, always clear local state
+    }
+    clearAuth();
+    toast.success("Đã đăng xuất");
+    router.push("/");
+  };
+
+  const avatarUrl = user ? getAvatarUrl(user.id ?? user.email) : "";
+  const initials = user ? getInitials(user.name, user.email) : "?";
 
   return (
     <>
@@ -88,23 +134,74 @@ export function Navbar() {
 
             <ThemeToggle />
 
+            {/* Auth section – desktop */}
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/auth/login">
-                <Button
-                  variant="ghost"
-                  className="text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:bg-orange-50/80 dark:hover:bg-orange-900/10 transition-all duration-300 cursor-pointer font-medium"
-                >
-                  Đăng nhập
-                </Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button
-                  variant="outline"
-                  className="border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-400 transition-all duration-300 cursor-pointer font-medium"
-                >
-                  Đăng ký
-                </Button>
-              </Link>
+              {isAuthenticated && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 rounded-full p-0.5 ring-2 ring-transparent hover:ring-orange-400 transition-all duration-200 focus:outline-none focus-visible:ring-orange-400">
+                      <Avatar className="h-9 w-9 cursor-pointer">
+                        <AvatarImage src={avatarUrl} alt={user.name ?? user.email} />
+                        <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-400 text-white text-sm font-semibold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52 mt-1">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-sm truncate">
+                          {user.name ?? "Người dùng"}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {user.email}
+                        </span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Trang cá nhân
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/settings" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Cài đặt
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20 cursor-pointer"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Link href="/auth/login">
+                    <Button
+                      variant="ghost"
+                      className="text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:bg-orange-50/80 dark:hover:bg-orange-900/10 transition-all duration-300 cursor-pointer font-medium"
+                    >
+                      Đăng nhập
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button
+                      variant="outline"
+                      className="border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-400 transition-all duration-300 cursor-pointer font-medium"
+                    >
+                      Đăng ký
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             <Button
@@ -140,17 +237,56 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
+
               <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full border-orange-300 text-orange-600 hover:bg-orange-50">
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white">
-                    Đăng ký
-                  </Button>
-                </Link>
+                {isAuthenticated && user ? (
+                  <>
+                    {/* User info row */}
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage src={avatarUrl} alt={user.name ?? user.email} />
+                        <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-400 text-white text-sm font-semibold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                          {user.name ?? "Người dùng"}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {user.email}
+                        </span>
+                      </div>
+                    </div>
+                    <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                        <User className="h-4 w-4" />
+                        Trang cá nhân
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Đăng xuất
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-orange-300 text-orange-600 hover:bg-orange-50">
+                        Đăng nhập
+                      </Button>
+                    </Link>
+                    <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white">
+                        Đăng ký
+                      </Button>
+                    </Link>
+                  </>
+                )}
                 <Link href="/rooms" onClick={() => setMobileMenuOpen(false)}>
                   <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                     Đặt phòng ngay
