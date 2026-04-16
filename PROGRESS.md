@@ -165,3 +165,4 @@
 | 2026-04-16 | AI | Bước 1 FE setup: install deps (RHF, zod, axios), QueryClientProvider, .env.example, fix Next.js CVE |
 | 2026-04-16 | AI | Bước 2 BE: Docker Compose (postgres+pgadmin), NestJS, Prisma 5, Auth module (PassportStrategy), Users module – tested OK |
 | 2026-04-16 | AI | Bước 3 FE↔BE: apiClient (axios+interceptor), authStore (Zustand), form login/register wire với RHF+Zod+API |
+| 2026-04-16 | AI | Fix gitignore: root .gitignore bị UTF-16 (patterns không hoạt động) → rewrite UTF-8; bỏ track infra/docker/.env và be/dist/ |
