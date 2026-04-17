@@ -12,6 +12,16 @@ export interface LoginInput {
   password: string;
 }
 
+export interface UpdateProfileInput {
+  name?: string;
+  avatar?: string;
+}
+
+export interface ChangePasswordInput {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export const authApi = {
   register: async (input: RegisterInput) => {
     const { data } = await apiClient.post<ApiResponse<AuthResponse>>(
@@ -38,5 +48,17 @@ export const authApi = {
       "/users/me"
     );
     return data.data;
+  },
+
+  updateProfile: async (input: UpdateProfileInput) => {
+    const { data } = await apiClient.patch<ApiResponse<AuthResponse["user"]>>(
+      "/users/me",
+      input
+    );
+    return data.data;
+  },
+
+  changePassword: async (input: ChangePasswordInput) => {
+    await apiClient.patch("/users/me/password", input);
   },
 };
