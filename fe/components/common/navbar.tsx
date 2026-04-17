@@ -12,7 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Home, CalendarDays, PlusCircle, Loader2, Star } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemeToggle } from "./theme-toggle";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,20 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const { isAuthenticated, user, clearAuth } = useAuthStore();
+  const { isAuthenticated, user, clearAuth, updateUser } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const { mutate: becomeHost, isPending: isBecomeHostPending } = useMutation({
+    mutationFn: authApi.becomeHost,
+    onSuccess: (updated) => {
+      if (updated) {
+        updateUser(updated);
+        queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+        toast.success("Bạn đã trở thành Host! Hãy đăng chỗ ở đầu tiên.");
+      }
+    },
+    onError: () => toast.error("Có lỗi xảy ra. Vui lòng thử lại."),
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -148,7 +162,7 @@ export function Navbar() {
                       </Avatar>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 mt-1">
+                  <DropdownMenuContent align="end" className="w-56 mt-1">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-sm truncate">
@@ -160,6 +174,7 @@ export function Navbar() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
@@ -167,11 +182,49 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile/settings" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Cài đặt
+                      <Link href="/bookings" className="cursor-pointer">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        Đặt phòng của tôi
                       </Link>
                     </DropdownMenuItem>
+
+                    {user.role === "GUEST" && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => becomeHost()}
+                          disabled={isBecomeHostPending}
+                          className="cursor-pointer text-orange-600 dark:text-orange-400 focus:text-orange-600 focus:bg-orange-50"
+                        >
+                          {isBecomeHostPending
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            : <Star className="mr-2 h-4 w-4" />}
+                          Trở thành Host
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {(user.role === "HOST" || user.role === "ADMIN") && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs text-slate-400 font-normal py-1">
+                          Quản lý Host
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href="/host/listings/new" className="cursor-pointer">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Đăng chỗ ở mới
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/host/bookings" className="cursor-pointer">
+                            <Home className="mr-2 h-4 w-4" />
+                            Quản lý booking
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -264,6 +317,42 @@ export function Navbar() {
                         Trang cá nhân
                       </Button>
                     </Link>
+                    <Link href="/bookings" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                        <CalendarDays className="h-4 w-4" />
+                        Đặt phòng của tôi
+                      </Button>
+                    </Link>
+
+                    {user?.role === "GUEST" && (
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-orange-600"
+                        disabled={isBecomeHostPending}
+                        onClick={() => { setMobileMenuOpen(false); becomeHost(); }}
+                      >
+                        {isBecomeHostPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+                        Trở thành Host
+                      </Button>
+                    )}
+
+                    {(user?.role === "HOST" || user?.role === "ADMIN") && (
+                      <>
+                        <Link href="/host/listings/new" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                            <PlusCircle className="h-4 w-4" />
+                            Đăng chỗ ở mới
+                          </Button>
+                        </Link>
+                        <Link href="/host/bookings" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                            <Home className="h-4 w-4" />
+                            Quản lý booking
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"

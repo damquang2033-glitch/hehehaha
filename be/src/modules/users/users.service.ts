@@ -36,6 +36,18 @@ export class UsersService {
     return user;
   }
 
+  async becomeHost(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== 'GUEST') return { message: 'Already a host or admin' };
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { role: 'HOST' },
+      select: { id: true, email: true, name: true, avatar: true, role: true, createdAt: true },
+    });
+  }
+
   async changePassword(id: string, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');

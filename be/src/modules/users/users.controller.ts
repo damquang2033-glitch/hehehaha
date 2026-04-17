@@ -23,6 +23,11 @@ export class UsersController {
     return this.usersService.updateProfile(user.id, dto);
   }
 
+  @Patch('me/become-host')
+  becomeHost(@CurrentUser() user: { id: string }) {
+    return this.usersService.becomeHost(user.id);
+  }
+
   @Patch('me/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   changePassword(

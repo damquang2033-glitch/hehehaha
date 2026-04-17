@@ -61,4 +61,11 @@ export const authApi = {
   changePassword: async (input: ChangePasswordInput) => {
     await apiClient.patch("/users/me/password", input);
   },
+
+  becomeHost: async () => {
+    const { data } = await apiClient.patch<ApiResponse<AuthResponse["user"]>>(
+      "/users/me/become-host"
+    );
+    return data.data;
+  },
 };
