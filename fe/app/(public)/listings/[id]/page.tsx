@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useListing } from "@/features/listings/hooks/useListings";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,22 +13,15 @@ import {
   Bed,
   Bath,
   ArrowLeft,
-  Calendar,
   Star,
   Pencil,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { BookingCard } from "@/features/bookings/components/BookingCard";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
-
-const formatCurrency = (amount: string | number) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
 
 export default function ListingDetailPage({ params }: PageProps) {
   const { id } = use(params);
@@ -177,47 +169,7 @@ export default function ListingDetailPage({ params }: PageProps) {
 
           {/* Right: Booking card */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-lg p-6 space-y-5">
-              <div>
-                <span className="text-3xl font-bold text-slate-900 dark:text-white">
-                  {formatCurrency(listing.price)}
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 ml-1">/đêm</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Nhận phòng</p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-orange-500" />
-                    Chọn ngày
-                  </p>
-                </div>
-                <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Trả phòng</p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-orange-500" />
-                    Chọn ngày
-                  </p>
-                </div>
-              </div>
-
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Khách</p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">1 khách</p>
-              </div>
-
-              <Button
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 rounded-xl h-12 text-base"
-                disabled
-              >
-                Đặt phòng (sắp ra mắt)
-              </Button>
-
-              <Badge variant="secondary" className="w-full justify-center text-xs py-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800">
-                Tính năng đặt phòng đang được phát triển
-              </Badge>
-            </div>
+            <BookingCard listing={listing} isOwner={isOwner} />
           </div>
         </div>
       </div>

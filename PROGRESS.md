@@ -159,12 +159,13 @@
 - [ ] `PATCH /api/v1/bookings/:id/status` – host confirm/cancel; guest cancel
 
 **FE**
-- [ ] `fe/types/booking.ts` – Booking, BookingStatus types
-- [ ] `fe/features/bookings/api/bookingsApi.ts` – create, getMyBookings, getHostBookings, updateStatus
-- [ ] `fe/features/bookings/hooks/` – useMyBookings, useCreateBooking, useUpdateBookingStatus
-- [ ] Thay booking stub trên `/listings/[id]` bằng form thật (chọn ngày + số khách)
-- [ ] `fe/app/(protected)/bookings/page.tsx` – trang "Đặt phòng của tôi"
-- [ ] `fe/app/(protected)/host/bookings/page.tsx` – host quản lý booking (confirm/cancel)
+- [x] `fe/types/booking.ts` – Booking, BookingStatus types
+- [x] `fe/features/bookings/api/bookingsApi.ts` – create, getMyBookings, getHostBookings, updateStatus
+- [x] `fe/features/bookings/hooks/useBookings.ts` – useMyBookings, useCreateBooking, useUpdateBookingStatus
+- [x] `fe/features/bookings/components/BookingCard.tsx` – form đặt phòng thật (ngày + số khách + tính tiền)
+- [x] Thay booking stub trên `/listings/[id]` bằng BookingCard
+- [x] `fe/app/(protected)/bookings/page.tsx` – trang "Đặt phòng của tôi" + hủy
+- [x] `fe/app/(protected)/host/bookings/page.tsx` – host xác nhận/từ chối booking
 
 ### Host Dashboard
 - [ ] `fe/app/(protected)/host/page.tsx` – dashboard tổng quan (số listing, booking pending)
