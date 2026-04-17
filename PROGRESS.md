@@ -52,7 +52,7 @@
 - [x] `fe/lib/apiClient.ts` – axios với auto refresh token interceptor
 - [x] `fe/stores/authStore.ts` – Zustand store (user, isAuthenticated, setAuth, clearAuth)
 - [x] Kết nối form login/register với BE API (RHF + Zod + toast + redirect)
-- [ ] `fe/features/listings/` – hooks, types, api calls cho listings
+- [x] `fe/features/listings/` – hooks, types, api calls cho listings
 - [x] TanStack Query setup + QueryClientProvider (`fe/components/providers.tsx`)
 - [x] Protected routes (`fe/app/(protected)/layout.tsx` – redirect nếu chưa đăng nhập)
 - [x] User profile page (`/profile` – TanStack Query + Avatar + Badge + Logout)
@@ -94,50 +94,63 @@
 - [x] `JwtAuthGuard`
 
 **Module: Listings (Phase 1 cơ bản)**
-- [ ] Prisma model `Listing` (id, title, description, price, location, images, hostId)
-- [ ] `be/src/modules/listings/` – GET /api/v1/listings, GET /api/v1/listings/:id
-- [ ] Pagination: `?page=1&limit=10`
+- [x] Prisma model `Listing` (id, title, description, price, location, images, hostId)
+- [x] `be/src/modules/listing/` – GET /api/v1/listings, GET /api/v1/listings/:id
+- [x] Pagination: `?page=1&limit=10`
 
 ---
 
 ### Infra
 
 **Docker**
-- [ ] `infra/docker/Dockerfile.be` – multi-stage build cho NestJS
-- [ ] `infra/docker/Dockerfile.fe` – multi-stage build cho Next.js
+- [x] `infra/docker/Dockerfile.be` – multi-stage build cho NestJS
+- [x] `infra/docker/Dockerfile.fe` – multi-stage build cho Next.js
 - [x] `infra/docker/docker-compose.yml` – postgres + pgadmin đang chạy tại localhost:5432 / localhost:5050
 - [x] `.env.example` ở root (template cho cả FE + BE)
 
-**CI/CD**
-- [ ] `.github/workflows/fe-deploy.yml` – build + deploy lên Vercel
-- [ ] `.github/workflows/be-deploy.yml` – build Docker image + push ECR + deploy ECS
-
-**Deploy**
+**CI/CD + Deploy** _(dời sang Phase 2 – làm sau khi có CRUD hoàn chỉnh)_
+- [ ] `.github/workflows/fe-deploy.yml`
+- [ ] `.github/workflows/be-deploy.yml`
 - [ ] Deploy FE lên Vercel
 - [ ] Deploy BE lên AWS (ECS Fargate hoặc EC2 + Docker)
 - [ ] PostgreSQL hosted (Supabase / Neon / AWS RDS)
-- [ ] Sentry tích hợp FE
-- [ ] Sentry tích hợp BE
+- [ ] Sentry tích hợp FE + BE
 
 ---
 
-### Examples & PRPs
+### CRUD Cơ bản (ưu tiên tiếp theo)
 
-- [ ] `examples/fe/AuthForm.tsx` – React Hook Form + Zod
-- [ ] `examples/fe/useListings.ts` – TanStack Query hook
-- [ ] `examples/be/auth.module.ts` – NestJS module chuẩn
-- [ ] `examples/be/listings.service.ts` – Service với Prisma
-- [ ] `examples/infra/Dockerfile.be`
-- [ ] `examples/infra/docker-compose.yml`
+**BE – Listings CRUD (Host)**
+- [x] Prisma model `Listing` bổ sung: `maxGuests`, `bedrooms`, `bathrooms`
+- [x] `POST /api/v1/listings` – tạo listing (yêu cầu role HOST)
+- [x] `PATCH /api/v1/listings/:id` – cập nhật listing (chỉ host sở hữu)
+- [x] `DELETE /api/v1/listings/:id` – xóa listing (chỉ host sở hữu)
+- [x] `RolesGuard` + `@Roles()` decorator + `CreateListingDto` đầy đủ validation
+
+**BE – User Profile CRUD**
+- [x] `PATCH /api/v1/users/me` – cập nhật name, avatar
+- [x] `PATCH /api/v1/users/me/password` – đổi mật khẩu (verify old password)
+
+**FE – Trang chi tiết listing**
+- [x] `fe/app/(public)/listings/[id]/page.tsx` – hiển thị chi tiết 1 listing
+- [x] `fe/components/features/listing-card.tsx` – card dùng cho danh sách (map với Listing type)
+- [x] Kết nối trang `/rooms` hiện có với API thật (thay mock data)
+
+**FE – Host: Tạo / sửa listing**
+- [x] `fe/app/(protected)/host/listings/new/page.tsx` – form tạo listing
+- [x] `fe/app/(protected)/host/listings/[id]/edit/page.tsx` – form sửa + xóa listing
+- [x] `fe/features/listings/hooks/useListingMutations.ts` – useCreateListing, useUpdateListing, useDeleteListing
+- [x] `fe/features/listings/components/ListingForm.tsx` – form dùng chung (RHF + Zod)
+- [x] `fe/app/(protected)/host/layout.tsx` – guard chỉ cho HOST/ADMIN
+- [x] Nút "Chỉnh sửa" trên trang detail (chỉ hiện với chủ sở hữu)
 
 ---
 
-## Phase 2 – Core Features (CHƯA BẮT ĐẦU – chờ Phase 1 xong)
+## Phase 2 – Booking + Deploy (SAU KHI CRUD xong)
 
-> Không lên kế hoạch chi tiết cho Phase 2 khi Phase 1 chưa hoàn thành.
-
+- [ ] CI/CD + Deploy (từ Phase 1 dời sang)
 - [ ] Booking flow (tạo booking, check availability, lịch đặt phòng)
-- [ ] Host dashboard (đăng listing, quản lý booking)
+- [ ] Host dashboard (quản lý booking)
 - [ ] Thanh toán (Stripe hoặc VNPay)
 - [ ] Tìm kiếm nâng cao (filter theo giá, tiện nghi, địa điểm)
 - [ ] Reviews & ratings
@@ -154,6 +167,7 @@
 | Database | PostgreSQL + Prisma | Đã ghi trong CLAUDE.md |
 | Auth tokens | Access token 15m + Refresh token 7d | Đã ghi trong CLAUDE.md |
 | API prefix | `/api/v1/` | Đã ghi trong CLAUDE.md |
+| CI/CD + Deploy | Dời sang sau CRUD | Ưu tiên có tính năng hoàn chỉnh trước khi deploy |
 
 ---
 
@@ -166,3 +180,11 @@
 | 2026-04-16 | AI | Bước 2 BE: Docker Compose (postgres+pgadmin), NestJS, Prisma 5, Auth module (PassportStrategy), Users module – tested OK |
 | 2026-04-16 | AI | Bước 3 FE↔BE: apiClient (axios+interceptor), authStore (Zustand), form login/register wire với RHF+Zod+API |
 | 2026-04-16 | AI | Fix gitignore: root .gitignore bị UTF-16 (patterns không hoạt động) → rewrite UTF-8; bỏ track infra/docker/.env và be/dist/ |
+| 2026-04-17 | AI | BE Listings: implement ListingService+Controller+QueryDto (GET /listings, GET /listings/:id, pagination) – thay thế scaffold NestJS |
+| 2026-04-17 | AI | FE Listings: tạo fe/types/listing.ts, fe/features/listings/api + hooks (useListings, useListing) |
+| 2026-04-17 | AI | Infra: Dockerfile.be (multi-stage NestJS) + Dockerfile.fe (multi-stage Next.js standalone) + thêm output:standalone vào next.config.ts |
+| 2026-04-17 | User | Quyết định: dời CI/CD + Deploy sang Phase 2, ưu tiên CRUD listings + user profile trước |
+| 2026-04-17 | AI | BE CRUD Listings: RolesGuard, @Roles decorator, CreateListingDto, POST/PATCH/DELETE /listings + migrate schema (maxGuests, bedrooms, bathrooms) |
+| 2026-04-17 | AI | FE Listings end-to-end: ListingCard component, /rooms kết nối API thật (loading/error/empty state), /listings/[id] trang chi tiết (gallery + stats + host + booking stub) |
+| 2026-04-17 | AI | FE Host CRUD: ListingForm (RHF+Zod), /host/listings/new, /host/listings/[id]/edit (sửa+xóa), host layout guard, nút chỉnh sửa cho owner |
+| 2026-04-17 | AI | BE + FE User Profile: PATCH /users/me (name, avatar) + PATCH /users/me/password (verify old pw) + profile page update (edit form + đổi mật khẩu) |
