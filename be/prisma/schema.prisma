@@ -35,6 +35,9 @@ model Listing {
   price       Decimal
   location    String
   images      String[]
+  maxGuests   Int?
+  bedrooms    Int?
+  bathrooms   Int?
   hostId      String
   host        User     @relation(fields: [hostId], references: [id])
   createdAt   DateTime @default(now())

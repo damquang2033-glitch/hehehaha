@@ -6,7 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { validate } from './config/env.validation';
-import { ListingModule } from './listing/listing.module';
+import { ListingModule } from './modules/listing/listing.module';
 
 @Module({
   imports: [
