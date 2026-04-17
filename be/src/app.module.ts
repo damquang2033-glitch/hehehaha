@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { validate } from './config/env.validation';
 import { ListingModule } from './modules/listing/listing.module';
+import { BookingModule } from './modules/booking/booking.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ListingModule } from './modules/listing/listing.module';
     AuthModule,
     UsersModule,
     ListingModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

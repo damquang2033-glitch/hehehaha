@@ -7,29 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  avatar       String?
-  role         Role     @default(GUEST)
-  refreshToken String?
-  listings     Listing[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("users")
-}
-
 enum Role {
   GUEST
   HOST
   ADMIN
 }
 
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  avatar       String?
+  role         Role      @default(GUEST)
+  refreshToken String?
+  listings     Listing[]
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("users")
+}
+
 model Listing {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
   price       Decimal
@@ -39,7 +47,25 @@ model Listing {
   bedrooms    Int?
   bathrooms   Int?
   hostId      String
-  host        User     @relation(fields: [hostId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  host        User      @relation(fields: [hostId], references: [id])
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  listingId  String
+  listing    Listing       @relation(fields: [listingId], references: [id])
+  guestId    String
+  guest      User          @relation(fields: [guestId], references: [id])
+  checkIn    DateTime
+  checkOut   DateTime
+  totalPrice Decimal
+  guestCount Int
+  status     BookingStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("bookings")
 }

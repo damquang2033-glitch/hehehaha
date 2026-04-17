@@ -146,16 +146,49 @@
 
 ---
 
-## Phase 2 – Booking + Deploy (SAU KHI CRUD xong)
+## Phase 2 – Booking + Deploy
 
-- [ ] CI/CD + Deploy (từ Phase 1 dời sang)
-- [ ] Booking flow (tạo booking, check availability, lịch đặt phòng)
-- [ ] Host dashboard (quản lý booking)
-- [ ] Thanh toán (Stripe hoặc VNPay)
-- [ ] Tìm kiếm nâng cao (filter theo giá, tiện nghi, địa điểm)
-- [ ] Reviews & ratings
-- [ ] Notifications (email / in-app)
+### Booking Flow
+
+**BE**
+- [ ] Prisma model `Booking` (id, listingId, guestId, checkIn, checkOut, totalPrice, guestCount, status, createdAt)
+- [ ] `BookingStatus` enum: PENDING, CONFIRMED, CANCELLED, COMPLETED
+- [ ] `POST /api/v1/bookings` – tạo booking (check availability, tính totalPrice)
+- [ ] `GET /api/v1/bookings/me` – danh sách booking của guest (pagination)
+- [ ] `GET /api/v1/bookings/host` – danh sách booking trên listings của host
+- [ ] `PATCH /api/v1/bookings/:id/status` – host confirm/cancel; guest cancel
+
+**FE**
+- [ ] `fe/types/booking.ts` – Booking, BookingStatus types
+- [ ] `fe/features/bookings/api/bookingsApi.ts` – create, getMyBookings, getHostBookings, updateStatus
+- [ ] `fe/features/bookings/hooks/` – useMyBookings, useCreateBooking, useUpdateBookingStatus
+- [ ] Thay booking stub trên `/listings/[id]` bằng form thật (chọn ngày + số khách)
+- [ ] `fe/app/(protected)/bookings/page.tsx` – trang "Đặt phòng của tôi"
+- [ ] `fe/app/(protected)/host/bookings/page.tsx` – host quản lý booking (confirm/cancel)
+
+### Host Dashboard
+- [ ] `fe/app/(protected)/host/page.tsx` – dashboard tổng quan (số listing, booking pending)
+
+### Tìm kiếm nâng cao
+- [ ] Filter theo giá, số khách, địa điểm truyền lên API
+- [ ] BE: mở rộng `ListingQueryDto` thêm `minPrice`, `maxPrice`, `minGuests`
+
+### Reviews & Ratings
+- [ ] Prisma model `Review` (id, bookingId, guestId, listingId, rating, comment)
+- [ ] BE + FE sau khi booking flow hoàn thành
+
+### Thanh toán, Notifications, Admin
+- [ ] Stripe / VNPay integration
+- [ ] Email notifications
 - [ ] Admin dashboard
+
+### CI/CD + Deploy (dời từ Phase 1)
+- [ ] `.github/workflows/fe-deploy.yml`
+- [ ] `.github/workflows/be-deploy.yml`
+- [ ] Deploy FE lên Vercel
+- [ ] Deploy BE lên AWS
+- [ ] PostgreSQL hosted (Supabase / Neon / AWS RDS)
+- [ ] Sentry FE + BE
 
 ---
 
