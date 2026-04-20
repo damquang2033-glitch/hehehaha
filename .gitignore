@@ -32,3 +32,6 @@ Thumbs.db
 # Misc
 *.log
 *.tmp
+
+# Local developer setup guide (not for repo)
+DEV_SETUP.md

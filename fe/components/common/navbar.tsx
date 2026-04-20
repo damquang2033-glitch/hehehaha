@@ -12,8 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User, LogOut, Home, CalendarDays, PlusCircle, Loader2, Star } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Menu, X, User, LogOut, Home, CalendarDays, PlusCircle, Star } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,6 @@ const NAV_LINKS = [
   { href: "/contact", label: "Liên hệ" },
 ];
 
-// Generate a deterministic avatar URL from user id/email using DiceBear
 function getAvatarUrl(seed: string) {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1f4d4,ffd5dc,ffdfbf`;
 }
@@ -51,20 +49,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const { isAuthenticated, user, clearAuth, updateUser } = useAuthStore();
-  const queryClient = useQueryClient();
-
-  const { mutate: becomeHost, isPending: isBecomeHostPending } = useMutation({
-    mutationFn: authApi.becomeHost,
-    onSuccess: (updated) => {
-      if (updated) {
-        updateUser(updated);
-        queryClient.invalidateQueries({ queryKey: ["users", "me"] });
-        toast.success("Bạn đã trở thành Host! Hãy đăng chỗ ở đầu tiên.");
-      }
-    },
-    onError: () => toast.error("Có lỗi xảy ra. Vui lòng thử lại."),
-  });
+  const { isAuthenticated, user, clearAuth } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -188,18 +173,18 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* ── Trở thành Host ── */}
                     {user.role === "GUEST" && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => becomeHost()}
-                          disabled={isBecomeHostPending}
-                          className="cursor-pointer text-orange-600 dark:text-orange-400 focus:text-orange-600 focus:bg-orange-50"
-                        >
-                          {isBecomeHostPending
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            : <Star className="mr-2 h-4 w-4" />}
-                          Trở thành Host
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/become-host"
+                            className="cursor-pointer text-orange-600 dark:text-orange-400 focus:text-orange-600 focus:bg-orange-50"
+                          >
+                            <Star className="mr-2 h-4 w-4" />
+                            Trở thành Host
+                          </Link>
                         </DropdownMenuItem>
                       </>
                     )}
@@ -311,6 +296,7 @@ export function Navbar() {
                         </span>
                       </div>
                     </div>
+
                     <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
                         <User className="h-4 w-4" />
@@ -324,16 +310,14 @@ export function Navbar() {
                       </Button>
                     </Link>
 
+                    {/* ── Trở thành Host ── */}
                     {user?.role === "GUEST" && (
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-orange-600"
-                        disabled={isBecomeHostPending}
-                        onClick={() => { setMobileMenuOpen(false); becomeHost(); }}
-                      >
-                        {isBecomeHostPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
-                        Trở thành Host
-                      </Button>
+                      <Link href="/become-host" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start gap-2 text-orange-600">
+                          <Star className="h-4 w-4" />
+                          Trở thành Host
+                        </Button>
+                      </Link>
                     )}
 
                     {(user?.role === "HOST" || user?.role === "ADMIN") && (
