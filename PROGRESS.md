@@ -151,12 +151,12 @@
 ### Booking Flow
 
 **BE**
-- [ ] Prisma model `Booking` (id, listingId, guestId, checkIn, checkOut, totalPrice, guestCount, status, createdAt)
-- [ ] `BookingStatus` enum: PENDING, CONFIRMED, CANCELLED, COMPLETED
-- [ ] `POST /api/v1/bookings` – tạo booking (check availability, tính totalPrice)
-- [ ] `GET /api/v1/bookings/me` – danh sách booking của guest (pagination)
-- [ ] `GET /api/v1/bookings/host` – danh sách booking trên listings của host
-- [ ] `PATCH /api/v1/bookings/:id/status` – host confirm/cancel; guest cancel
+- [x] Prisma model `Booking` (id, listingId, guestId, checkIn, checkOut, totalPrice, guestCount, status, createdAt)
+- [x] `BookingStatus` enum: PENDING, CONFIRMED, CANCELLED, COMPLETED
+- [x] `POST /api/v1/bookings` – tạo booking (check availability, tính totalPrice)
+- [x] `GET /api/v1/bookings/me` – danh sách booking của guest (pagination)
+- [x] `GET /api/v1/bookings/host` – danh sách booking trên listings của host
+- [x] `PATCH /api/v1/bookings/:id/status` – host confirm/cancel; guest cancel
 
 **FE**
 - [x] `fe/types/booking.ts` – Booking, BookingStatus types
@@ -167,12 +167,16 @@
 - [x] `fe/app/(protected)/bookings/page.tsx` – trang "Đặt phòng của tôi" + hủy
 - [x] `fe/app/(protected)/host/bookings/page.tsx` – host xác nhận/từ chối booking
 
+### Become Host
+- [x] `PATCH /api/v1/users/me/become-host` – nâng role GUEST → HOST
+- [x] FE navbar: role-based menu (GUEST thấy "Trở thành Host", HOST thấy quản lý)
+
 ### Host Dashboard
-- [ ] `fe/app/(protected)/host/page.tsx` – dashboard tổng quan (số listing, booking pending)
+- [x] `fe/app/(protected)/host/page.tsx` – dashboard tổng quan (số listing, tổng booking, booking pending)
 
 ### Tìm kiếm nâng cao
-- [ ] Filter theo giá, số khách, địa điểm truyền lên API
-- [ ] BE: mở rộng `ListingQueryDto` thêm `minPrice`, `maxPrice`, `minGuests`
+- [x] BE: mở rộng `ListingQueryDto` thêm `minPrice`, `maxPrice`, `minGuests`, `hostId`
+- [x] FE: rooms/page.tsx gửi filter lên API (thay vì lọc client-side)
 
 ### Reviews & Ratings
 - [ ] Prisma model `Review` (id, bookingId, guestId, listingId, rating, comment)
@@ -222,3 +226,7 @@
 | 2026-04-17 | AI | FE Listings end-to-end: ListingCard component, /rooms kết nối API thật (loading/error/empty state), /listings/[id] trang chi tiết (gallery + stats + host + booking stub) |
 | 2026-04-17 | AI | FE Host CRUD: ListingForm (RHF+Zod), /host/listings/new, /host/listings/[id]/edit (sửa+xóa), host layout guard, nút chỉnh sửa cho owner |
 | 2026-04-17 | AI | BE + FE User Profile: PATCH /users/me (name, avatar) + PATCH /users/me/password (verify old pw) + profile page update (edit form + đổi mật khẩu) |
+| 2026-04-17 | AI | BE + FE Booking flow: Prisma model Booking, BookingStatus enum, POST/GET/PATCH endpoints + FE booking card, my bookings page, host bookings page |
+| 2026-04-17 | AI | BE + FE Become-host: PATCH /users/me/become-host + navbar role-based menu (GUEST/HOST/ADMIN items) |
+| 2026-04-20 | AI | Host Dashboard FE (fe/app/(protected)/host/page.tsx) – stats: listings, bookings, pending count + recent bookings |
+| 2026-04-20 | AI | Advanced Search: BE ListingQueryDto mở rộng (minPrice, maxPrice, minGuests, hostId) + FE rooms/page.tsx gửi filter lên API |

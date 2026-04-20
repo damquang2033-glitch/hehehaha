@@ -13,12 +13,26 @@ export class ListingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: ListingQueryDto) {
-    const { page = 1, limit = 10, location } = query;
+    const {
+      page = 1,
+      limit = 10,
+      location,
+      minPrice,
+      maxPrice,
+      minGuests,
+      hostId,
+    } = query;
     const skip = (page - 1) * limit;
 
-    const where = location
-      ? { location: { contains: location, mode: 'insensitive' as const } }
-      : {};
+    const where: Record<string, unknown> = {};
+    if (location)
+      where['location'] = { contains: location, mode: 'insensitive' };
+    if (minPrice !== undefined)
+      where['price'] = { ...((where['price'] as object) ?? {}), gte: minPrice };
+    if (maxPrice !== undefined)
+      where['price'] = { ...((where['price'] as object) ?? {}), lte: maxPrice };
+    if (minGuests !== undefined) where['maxGuests'] = { gte: minGuests };
+    if (hostId) where['hostId'] = hostId;
 
     const [data, total] = await Promise.all([
       this.prisma.listing.findMany({

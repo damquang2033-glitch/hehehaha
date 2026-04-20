@@ -1,33 +1,31 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { ListingCard } from "@/components/features/listing-card";
 import { RoomFilters, RoomFilterValues } from "@/components/features/room-filters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BedDouble, Search, Sparkles } from "lucide-react";
 import { useListings } from "@/features/listings/hooks/useListings";
+import { ListingQueryParams } from "@/types/listing";
 
 const MAX_PRICE = 50000000;
 
 export default function RoomsPage() {
-  const [filters, setFilters] = useState<RoomFilterValues>({
-    priceRange: [0, MAX_PRICE],
-    maxGuests: null,
-    amenities: [],
-  });
+  const [queryParams, setQueryParams] = useState<ListingQueryParams>({ limit: 50 });
 
-  const { data, isLoading, isError } = useListings({ limit: 50 });
+  const { data, isLoading, isError } = useListings(queryParams);
 
-  const filteredListings = useMemo(() => {
-    if (!data?.data) return [];
-    return data.data.filter((listing) => {
-      const price = Number(listing.price);
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
-      if (filters.maxGuests && (listing.maxGuests ?? 0) < filters.maxGuests) return false;
-      return true;
+  const handleFilterChange = useCallback((filters: RoomFilterValues) => {
+    setQueryParams({
+      limit: 50,
+      minPrice: filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
+      maxPrice: filters.priceRange[1] < MAX_PRICE ? filters.priceRange[1] : undefined,
+      minGuests: filters.maxGuests ?? undefined,
     });
-  }, [data, filters]);
+  }, []);
+
+  const listings = data?.data ?? [];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -57,7 +55,7 @@ export default function RoomsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar Filters */}
           <div className="lg:col-span-1">
-            <RoomFilters onFilterChange={setFilters} maxPrice={MAX_PRICE} />
+            <RoomFilters onFilterChange={handleFilterChange} maxPrice={MAX_PRICE} />
           </div>
 
           {/* Listings Grid */}
@@ -68,7 +66,7 @@ export default function RoomsPage() {
                   <BedDouble className="h-5 w-5 text-orange-500" />
                 </div>
                 <span className="text-slate-600 dark:text-slate-400 font-medium">
-                  {isLoading ? "Đang tải..." : `${filteredListings.length} chỗ ở`}
+                  {isLoading ? "Đang tải..." : `${listings.length} chỗ ở`}
                 </span>
               </div>
             </div>
@@ -101,7 +99,7 @@ export default function RoomsPage() {
             )}
 
             {/* Empty state */}
-            {!isLoading && !isError && filteredListings.length === 0 && (
+            {!isLoading && !isError && listings.length === 0 && (
               <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-5">
                   <Search className="h-8 w-8 text-slate-300 dark:text-slate-600" />
@@ -116,9 +114,9 @@ export default function RoomsPage() {
             )}
 
             {/* Listings grid */}
-            {!isLoading && filteredListings.length > 0 && (
+            {!isLoading && listings.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredListings.map((listing) => (
+                {listings.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>

@@ -27,4 +27,8 @@ export interface ListingQueryParams {
   page?: number;
   limit?: number;
   location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minGuests?: number;
+  hostId?: string;
 }
