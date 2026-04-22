@@ -12,6 +12,7 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 const BOOKING_INCLUDE = {
   listing: { select: { id: true, title: true, location: true, images: true, price: true } },
   guest: { select: { id: true, name: true, email: true, avatar: true } },
+  review: { select: { id: true } },
 } as const;
 
 @Injectable()

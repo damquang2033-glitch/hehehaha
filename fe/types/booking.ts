@@ -14,6 +14,7 @@ export interface Booking {
   totalPrice: string;
   guestCount: number;
   status: BookingStatus;
+  review: { id: string } | null;
   createdAt: string;
 }
 

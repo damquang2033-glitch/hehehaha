@@ -184,8 +184,15 @@
 - [x] FE: rooms/page.tsx gửi filter lên API (thay vì lọc client-side)
 
 ### Reviews & Ratings
-- [ ] Prisma model `Review` (id, bookingId, guestId, listingId, rating, comment)
-- [ ] BE + FE sau khi booking flow hoàn thành
+- [x] Prisma model `Review` (id, bookingId, guestId, listingId, rating, comment) + migration
+- [x] `POST /api/v1/reviews` – tạo review (chỉ guest đã COMPLETED booking, 1 review / booking)
+- [x] `GET /api/v1/listings/:id/reviews` – danh sách reviews công khai + avgRating
+- [x] `GET /api/v1/reviews/me` – reviews của guest
+- [x] `fe/types/review.ts` + `fe/features/reviews/api/reviewsApi.ts`
+- [x] `fe/features/reviews/hooks/useReviews.ts` – useListingReviews, useCreateReview
+- [x] `fe/features/reviews/components/ReviewList.tsx` – hiển thị reviews + avg rating trên listing detail
+- [x] `fe/features/reviews/components/ReviewForm.tsx` – star rating + comment form
+- [x] Trang `/bookings`: nút "Đánh giá" cho COMPLETED bookings chưa review + modal
 
 ### Thanh toán, Notifications, Admin
 - [ ] Stripe / VNPay integration
@@ -237,3 +244,4 @@
 | 2026-04-20 | AI | Advanced Search: BE ListingQueryDto mở rộng (minPrice, maxPrice, minGuests, hostId) + FE rooms/page.tsx gửi filter lên API |
 | 2026-04-22 | AI | S3 Upload integration: BE upload module (presigned URLs), FE uploadApi.ts, StepPhotos viết lại với drag-drop + real S3 upload |
 | 2026-04-22 | AI | Prisma schema mở rộng Listing: beds, amenities, rentalType, propertyType, structure + CreateListingDto + listingsApi type update |
+| 2026-04-22 | AI | Reviews & Ratings: Prisma model Review, BE ReviewsModule, FE ReviewList+ReviewForm, /bookings review modal |

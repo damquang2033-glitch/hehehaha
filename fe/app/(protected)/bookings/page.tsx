@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { useMyBookings, useUpdateBookingStatus } from "@/features/bookings/hooks/useBookings";
 import { Booking, BookingStatus } from "@/types/booking";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, CalendarDays, Users, Loader2 } from "lucide-react";
+import { MapPin, CalendarDays, Users, Loader2, Star, X } from "lucide-react";
 import { toast } from "sonner";
+import ReviewForm from "@/features/reviews/components/ReviewForm";
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
   PENDING: "Chờ xác nhận",
@@ -30,8 +32,37 @@ const formatDate = (d: string) =>
 const formatCurrency = (amount: string | number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(amount));
 
+function ReviewModal({
+  booking,
+  onClose,
+}: {
+  booking: Booking;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+        >
+          <X className="h-4 w-4 text-slate-500" />
+        </button>
+        <h3 className="font-bold text-xl text-slate-900 mb-1">Viết đánh giá</h3>
+        <p className="text-sm text-slate-500 mb-5 line-clamp-1">{booking.listing.title}</p>
+        <ReviewForm
+          bookingId={booking.id}
+          listingId={booking.listingId}
+          onSuccess={onClose}
+        />
+      </div>
+    </div>
+  );
+}
+
 function BookingItem({ booking }: { booking: Booking }) {
   const { mutate: updateStatus, isPending } = useUpdateBookingStatus();
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const handleCancel = () => {
     if (!confirm("Bạn có chắc muốn hủy đặt phòng này?")) return;
@@ -45,52 +76,77 @@ function BookingItem({ booking }: { booking: Booking }) {
   };
 
   const canCancel = booking.status === "PENDING" || booking.status === "CONFIRMED";
+  const canReview = booking.status === "COMPLETED" && !booking.review;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col sm:flex-row">
-      <div className="relative w-full sm:w-40 h-40 shrink-0">
-        {booking.listing.images[0] ? (
-          <Image src={booking.listing.images[0]} alt={booking.listing.title} fill className="object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10" />
-        )}
-      </div>
-      <div className="p-5 flex flex-col justify-between flex-1">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <Link href={`/listings/${booking.listingId}`} className="font-bold text-slate-900 dark:text-white hover:text-orange-600 transition-colors line-clamp-1">
-              {booking.listing.title}
-            </Link>
-            <Badge className={`shrink-0 text-xs border ${STATUS_COLOR[booking.status]}`}>
-              {STATUS_LABEL[booking.status]}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-500">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="line-clamp-1">{booking.listing.location}</span>
-          </div>
-          <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-300">
-            <div className="flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 text-orange-500/70" />
-              <span>{formatDate(booking.checkIn)} → {formatDate(booking.checkOut)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Users className="h-4 w-4 text-orange-500/70" />
-              <span>{booking.guestCount} khách</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-between mt-4">
-          <span className="font-bold text-orange-600">{formatCurrency(booking.totalPrice)}</span>
-          {canCancel && (
-            <Button variant="outline" size="sm" onClick={handleCancel} disabled={isPending}
-              className="text-red-500 border-red-200 hover:bg-red-50">
-              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Hủy"}
-            </Button>
+    <>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col sm:flex-row">
+        <div className="relative w-full sm:w-40 h-40 shrink-0">
+          {booking.listing.images[0] ? (
+            <Image src={booking.listing.images[0]} alt={booking.listing.title} fill className="object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10" />
           )}
         </div>
+        <div className="p-5 flex flex-col justify-between flex-1">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <Link href={`/listings/${booking.listingId}`} className="font-bold text-slate-900 dark:text-white hover:text-orange-600 transition-colors line-clamp-1">
+                {booking.listing.title}
+              </Link>
+              <Badge className={`shrink-0 text-xs border ${STATUS_COLOR[booking.status]}`}>
+                {STATUS_LABEL[booking.status]}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="line-clamp-1">{booking.listing.location}</span>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4 text-orange-500/70" />
+                <span>{formatDate(booking.checkIn)} → {formatDate(booking.checkOut)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-orange-500/70" />
+                <span>{booking.guestCount} khách</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-4">
+            <span className="font-bold text-orange-600">{formatCurrency(booking.totalPrice)}</span>
+            <div className="flex items-center gap-2">
+              {canReview && (
+                <Button
+                  size="sm"
+                  onClick={() => setShowReviewModal(true)}
+                  className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white border-0"
+                >
+                  <Star className="h-3.5 w-3.5" />
+                  Đánh giá
+                </Button>
+              )}
+              {booking.status === "COMPLETED" && booking.review && (
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  Đã đánh giá
+                </span>
+              )}
+              {canCancel && (
+                <Button variant="outline" size="sm" onClick={handleCancel} disabled={isPending}
+                  className="text-red-500 border-red-200 hover:bg-red-50">
+                  {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Hủy"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {showReviewModal && (
+        <ReviewModal booking={booking} onClose={() => setShowReviewModal(false)} />
+      )}
+    </>
   );
 }
 

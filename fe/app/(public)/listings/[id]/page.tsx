@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { BookingCard } from "@/features/bookings/components/BookingCard";
+import ReviewList from "@/features/reviews/components/ReviewList";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -164,6 +165,12 @@ export default function ListingDetailPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Reviews */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h2 className="font-bold text-lg text-slate-900 dark:text-white mb-4">Đánh giá</h2>
+              <ReviewList listingId={id} />
             </div>
           </div>
 

@@ -30,6 +30,7 @@ model User {
   refreshToken String?
   listings     Listing[]
   bookings     Booking[]
+  reviews      Review[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -54,6 +55,7 @@ model Listing {
   hostId       String
   host         User      @relation(fields: [hostId], references: [id])
   bookings     Booking[]
+  reviews      Review[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -69,8 +71,25 @@ model Booking {
   totalPrice Decimal
   guestCount Int
   status     BookingStatus @default(PENDING)
+  review     Review?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
   @@map("bookings")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  guestId   String
+  guest     User     @relation(fields: [guestId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
 }

@@ -8,6 +8,8 @@ import { UsersModule } from './modules/users/users.module';
 import { validate } from './config/env.validation';
 import { ListingModule } from './modules/listing/listing.module';
 import { BookingModule } from './modules/booking/booking.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { BookingModule } from './modules/booking/booking.module';
     UsersModule,
     ListingModule,
     BookingModule,
+    ReviewsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
