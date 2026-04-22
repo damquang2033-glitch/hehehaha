@@ -11,7 +11,7 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { JwtPayload } from 'src/modules/auth/auth.service';
+import type { JwtPayload } from 'src/modules/auth/strategies/jwt.strategy';
 
 @Controller('reviews')
 export class ReviewsController {
