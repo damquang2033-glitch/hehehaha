@@ -2,6 +2,7 @@ import { plainToInstance } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
+  IsOptional,
   IsString,
   MinLength,
   validateSync,
@@ -39,6 +40,22 @@ class EnvironmentVariables {
 
   @IsString()
   CORS_ORIGIN: string = 'http://localhost:3000';
+
+  @IsString()
+  @IsOptional()
+  AWS_REGION?: string;
+
+  @IsString()
+  @IsOptional()
+  AWS_ACCESS_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  AWS_SECRET_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  AWS_BUCKET_NAME?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -10,7 +10,12 @@ export interface CreateListingInput {
   images?: string[];
   maxGuests?: number;
   bedrooms?: number;
+  beds?: number;
   bathrooms?: number;
+  amenities?: string[];
+  propertyType?: string;
+  rentalType?: string;
+  structure?: string;
 }
 
 export type UpdateListingInput = Partial<CreateListingInput>;

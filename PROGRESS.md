@@ -143,6 +143,11 @@
 - [x] `fe/features/listings/components/ListingForm.tsx` – form dùng chung (RHF + Zod)
 - [x] `fe/app/(protected)/host/layout.tsx` – guard chỉ cho HOST/ADMIN
 - [x] Nút "Chỉnh sửa" trên trang detail (chỉ hiện với chủ sở hữu)
+- [x] Multi-step listing flow (8 bước): StepAboutPlace → StepStructure → StepLocation → StepGuests → StepAmenities → StepPhotos → StepDescription → StepPrice
+- [x] `fe/stores/useListingStore.ts` – Zustand store cho multi-step form
+- [x] `fe/app/(protected)/host/listings/new/layout.tsx` – progress header với step indicator
+- [x] `fe/features/listings/api/uploadApi.ts` – getPresignedUrls + uploadFileToS3
+- [x] StepPhotos: drag-drop + file upload thật lên S3 (presigned URL flow)
 
 ---
 
@@ -230,3 +235,5 @@
 | 2026-04-17 | AI | BE + FE Become-host: PATCH /users/me/become-host + navbar role-based menu (GUEST/HOST/ADMIN items) |
 | 2026-04-20 | AI | Host Dashboard FE (fe/app/(protected)/host/page.tsx) – stats: listings, bookings, pending count + recent bookings |
 | 2026-04-20 | AI | Advanced Search: BE ListingQueryDto mở rộng (minPrice, maxPrice, minGuests, hostId) + FE rooms/page.tsx gửi filter lên API |
+| 2026-04-22 | AI | S3 Upload integration: BE upload module (presigned URLs), FE uploadApi.ts, StepPhotos viết lại với drag-drop + real S3 upload |
+| 2026-04-22 | AI | Prisma schema mở rộng Listing: beds, amenities, rentalType, propertyType, structure + CreateListingDto + listingsApi type update |

@@ -49,5 +49,28 @@ export class CreateListingDto {
   @IsInt()
   @Min(0)
   @IsOptional()
+  beds?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
   bathrooms?: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  amenities?: string[] = [];
+
+  @IsString()
+  @IsOptional()
+  propertyType?: string;
+
+  @IsString()
+  @IsOptional()
+  rentalType?: string;
+
+  @IsString()
+  @IsOptional()
+  structure?: string;
 }

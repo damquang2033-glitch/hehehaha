@@ -37,20 +37,25 @@ model User {
 }
 
 model Listing {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  price       Decimal
-  location    String
-  images      String[]
-  maxGuests   Int?
-  bedrooms    Int?
-  bathrooms   Int?
-  hostId      String
-  host        User      @relation(fields: [hostId], references: [id])
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  price        Decimal
+  location     String
+  images       String[]
+  maxGuests    Int?
+  bedrooms     Int?
+  beds         Int?
+  bathrooms    Int?
+  amenities    String[]
+  propertyType String?
+  rentalType   String?
+  structure    String?
+  hostId       String
+  host         User      @relation(fields: [hostId], references: [id])
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Booking {
