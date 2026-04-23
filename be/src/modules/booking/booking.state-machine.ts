@@ -9,21 +9,30 @@ export type BookingActor = 'guest' | 'host' | 'system';
  * System transitions are used internally (payment webhook, cron expiry, check-out).
  * Guest and host transitions map to what each role can manually trigger.
  */
-const TRANSITIONS: Record<BookingActor, Partial<Record<BookingStatus, BookingStatus[]>>> = {
+const TRANSITIONS: Record<
+  BookingActor,
+  Partial<Record<BookingStatus, BookingStatus[]>>
+> = {
   system: {
-    [BookingStatus.HOLD]:       [BookingStatus.PENDING, BookingStatus.CANCELLED],
-    [BookingStatus.PENDING]:    [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
-    [BookingStatus.CONFIRMED]:  [BookingStatus.CHECKED_IN, BookingStatus.CANCELLED],
+    [BookingStatus.HOLD]: [BookingStatus.PENDING, BookingStatus.CANCELLED],
+    [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+    [BookingStatus.CONFIRMED]: [
+      BookingStatus.CHECKED_IN,
+      BookingStatus.CANCELLED,
+    ],
     [BookingStatus.CHECKED_IN]: [BookingStatus.CHECKED_OUT],
   },
   guest: {
-    [BookingStatus.HOLD]:      [BookingStatus.CANCELLED],
-    [BookingStatus.PENDING]:   [BookingStatus.CANCELLED],
+    [BookingStatus.HOLD]: [BookingStatus.CANCELLED],
+    [BookingStatus.PENDING]: [BookingStatus.CANCELLED],
     [BookingStatus.CONFIRMED]: [BookingStatus.CANCELLED],
   },
   host: {
-    [BookingStatus.PENDING]:    [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
-    [BookingStatus.CONFIRMED]:  [BookingStatus.CHECKED_IN, BookingStatus.CANCELLED],
+    [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+    [BookingStatus.CONFIRMED]: [
+      BookingStatus.CHECKED_IN,
+      BookingStatus.CANCELLED,
+    ],
     [BookingStatus.CHECKED_IN]: [BookingStatus.CHECKED_OUT],
   },
 };

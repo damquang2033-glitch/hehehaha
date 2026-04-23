@@ -16,10 +16,43 @@ export function useHostBookings(page = 1) {
   });
 }
 
-export function useCreateBooking() {
+export function useBooking(id: string) {
+  return useQuery({
+    queryKey: ['bookings', id],
+    queryFn: () => bookingsApi.getById(id),
+    enabled: !!id,
+  });
+}
+
+export function useHoldBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateBookingInput) => bookingsApi.create(input),
+    mutationFn: (input: CreateBookingInput) => bookingsApi.hold(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+// kept for backward compat
+export function useCreateBooking() {
+  return useHoldBooking();
+}
+
+export function useInitiatePayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => bookingsApi.initiatePayment(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['bookings', id] });
+    },
+  });
+}
+
+export function useTriggerMockWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (paymentIntentId: string) => bookingsApi.triggerMockWebhook(paymentIntentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },

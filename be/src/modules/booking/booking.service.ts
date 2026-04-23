@@ -152,9 +152,12 @@ export class BookingService {
     });
 
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.guestId !== guestId) throw new ForbiddenException('Access denied');
+    if (booking.guestId !== guestId)
+      throw new ForbiddenException('Access denied');
     if (booking.status !== BookingStatus.HOLD) {
-      throw new BadRequestException('Chỉ có thể thanh toán booking đang ở trạng thái HOLD');
+      throw new BadRequestException(
+        'Chỉ có thể thanh toán booking đang ở trạng thái HOLD',
+      );
     }
     if (booking.holdUntil && booking.holdUntil < new Date()) {
       throw new BadRequestException(
@@ -190,7 +193,8 @@ export class BookingService {
       where: { paymentIntentId },
       include: { listing: { select: { instantBooking: true, title: true } } },
     });
-    if (!booking) throw new NotFoundException('Booking not found for this payment');
+    if (!booking)
+      throw new NotFoundException('Booking not found for this payment');
 
     if (!success) {
       await this.prisma.booking.update({
@@ -233,11 +237,7 @@ export class BookingService {
 
   // ── 5. Update status (manual by guest / host) ──────────────────────────────
 
-  async updateStatus(
-    id: string,
-    userId: string,
-    dto: UpdateBookingStatusDto,
-  ) {
+  async updateStatus(id: string, userId: string, dto: UpdateBookingStatusDto) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: {
@@ -342,7 +342,9 @@ export class BookingService {
       where: { id },
       include: {
         ...BOOKING_INCLUDE,
-        listing: { select: { ...BOOKING_INCLUDE.listing.select, hostId: true } },
+        listing: {
+          select: { ...BOOKING_INCLUDE.listing.select, hostId: true },
+        },
       },
     });
     if (!full) throw new NotFoundException('Booking not found');
@@ -370,14 +372,12 @@ export class BookingService {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  private computeRefund(
-    booking: {
-      totalPrice: { toNumber(): number };
-      checkIn: Date;
-      paymentStatus: PaymentStatus;
-      listing: { freeCancelBeforeHours: number; partialRefundPercent: number };
-    },
-  ): number {
+  private computeRefund(booking: {
+    totalPrice: { toNumber(): number };
+    checkIn: Date;
+    paymentStatus: PaymentStatus;
+    listing: { freeCancelBeforeHours: number; partialRefundPercent: number };
+  }): number {
     if (booking.paymentStatus !== PaymentStatus.PAID) return 0;
 
     const hoursUntilCheckIn =

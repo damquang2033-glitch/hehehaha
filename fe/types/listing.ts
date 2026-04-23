@@ -9,9 +9,19 @@ export interface Listing {
   images: string[];
   maxGuests: number | null;
   bedrooms: number | null;
+  beds: number | null;
   bathrooms: number | null;
+  amenities: string[];
+  propertyType: string | null;
+  rentalType: string | null;
+  structure: string | null;
+  instantBooking: boolean;
+  freeCancelBeforeHours: number;
+  partialRefundPercent: number;
   hostId: string;
-  host: Pick<User, 'id' | 'name' | 'avatar'>;
+  host: Pick<User, 'id' | 'name' | 'avatar'> & { bio?: string | null };
+  averageRating?: number | null;
+  reviewCount?: number | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -194,8 +194,49 @@
 - [x] `fe/features/reviews/components/ReviewForm.tsx` – star rating + comment form
 - [x] Trang `/bookings`: nút "Đánh giá" cho COMPLETED bookings chưa review + modal
 
+### Booking Flow v2 – End-to-End (HOLD → Payment → Confirmed → Review)
+
+> Flow: ListingDetail → Chọn ngày + số khách → Tạo HOLD (5–10 phút) → Payment Page → Thanh toán → CONFIRMED → Ở xong → CHECKED_OUT → Review & Rating
+
+**BE (đã hoàn thành trong session 2026-04-23)**
+- [x] `BookingStatus` v2: HOLD, PENDING, CONFIRMED, CHECKED_IN, CHECKED_OUT, CANCELLED
+- [x] `PaymentStatus` enum: UNPAID, PAID, FAILED, REFUNDED
+- [x] `Listing` config fields: `instantBooking`, `freeCancelBeforeHours`, `partialRefundPercent`
+- [x] `Booking` model v2: `holdUntil`, `paymentStatus`, `paymentIntentId`, `refundAmount`
+- [x] `Payment` model (1-1 với Booking, `stripeId`)
+- [x] `Conversation` + `Message` models (Chat)
+- [x] `be/src/modules/booking/booking.state-machine.ts` – state machine HOLD→PENDING→CONFIRMED→CHECKED_IN→CHECKED_OUT
+- [x] `BookingService.hold()` – tạo HOLD với PostgreSQL advisory lock (race-condition-free)
+- [x] `BookingService.initiatePayment()` – chuyển HOLD → tạo Payment record
+- [x] `BookingService.handlePaymentWebhook()` – PENDING → CONFIRMED (instantBooking) hoặc giữ PENDING
+- [x] `BookingService.updateStatus()` – host/guest transition với state machine validation
+- [x] `BookingService.computeRefund()` – tính hoàn tiền (full / partial / 0)
+- [x] `BookingService.expireStaleHolds()` – hết hạn HOLD quá giờ
+- [x] `POST /api/v1/bookings` – tạo HOLD (5 phút timer)
+- [x] `POST /api/v1/bookings/:id/pay` – khởi tạo payment
+- [x] `POST /api/v1/payments/webhook` – xử lý payment callback
+- [x] `PATCH /api/v1/bookings/:id/status` – host/guest cập nhật trạng thái
+- [x] `BookingTasksService` – cron mỗi phút expire HOLD hết hạn
+- [x] `ChatGateway` – Socket.IO `/chat` namespace với JWT auth, `send_message`, `mark_read`
+- [x] Migration `20260423000000_booking_v2_hold_payment_chat`
+
+**BE – Còn lại**
+- [ ] Chạy migration lên database: `npx prisma migrate deploy`
+
+**FE (đã hoàn thành 2026-04-23)**
+- [x] `fe/types/booking.ts` – thêm HOLD, CHECKED_IN, CHECKED_OUT, PaymentStatus, holdUntil, payment
+- [x] `fe/types/listing.ts` – thêm amenities, beds, instantBooking, averageRating, reviewCount, host.bio
+- [x] `fe/features/bookings/api/bookingsApi.ts` – thêm `hold()`, `getById()`, `initiatePayment()`, `triggerMockWebhook()`
+- [x] `fe/features/bookings/hooks/useBookings.ts` – thêm `useBooking`, `useHoldBooking`, `useInitiatePayment`, `useTriggerMockWebhook`
+- [x] `BookingCard` v2 – gọi `POST /bookings` tạo HOLD, redirect sang `/bookings/[id]/payment`
+- [x] `fe/app/(protected)/bookings/[id]/payment/page.tsx` – Payment page (countdown timer + mock payment)
+- [x] `fe/app/(protected)/bookings/[id]/confirmation/page.tsx` – Trang xác nhận booking thành công
+- [x] `/bookings` page – hiển thị đúng HOLD/PENDING/CONFIRMED/CHECKED_IN/CHECKED_OUT, HOLD countdown inline, nút "Thanh toán ngay"
+- [x] Reviews – nút "Đánh giá" chỉ hiện với `CHECKED_OUT` (đã fix từ `COMPLETED`)
+- [x] `host/bookings/page.tsx` – STATUS maps cập nhật đủ 6 trạng thái mới
+
 ### Thanh toán, Notifications, Admin
-- [ ] Stripe / VNPay integration
+- [ ] Stripe / VNPay integration (swap mock PaymentService)
 - [ ] Email notifications
 - [ ] Admin dashboard
 
@@ -245,3 +286,5 @@
 | 2026-04-22 | AI | S3 Upload integration: BE upload module (presigned URLs), FE uploadApi.ts, StepPhotos viết lại với drag-drop + real S3 upload |
 | 2026-04-22 | AI | Prisma schema mở rộng Listing: beds, amenities, rentalType, propertyType, structure + CreateListingDto + listingsApi type update |
 | 2026-04-22 | AI | Reviews & Ratings: Prisma model Review, BE ReviewsModule, FE ReviewList+ReviewForm, /bookings review modal |
+| 2026-04-23 | AI | Booking v2 BE: HOLD state machine, advisory lock, PaymentService (mock+Stripe template), ChatGateway (Socket.IO), BookingTasksService cron, migration SQL |
+| 2026-04-23 | AI | Booking v2 FE: types update, BookingCard→HOLD flow, /payment page (countdown+mock pay), /confirmation page, /bookings page (6 statuses + HOLD banner + canReview=CHECKED_OUT) |

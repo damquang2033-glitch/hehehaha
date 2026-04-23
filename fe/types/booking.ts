@@ -1,7 +1,22 @@
 import { Listing } from './listing';
 import { User } from './auth';
 
-export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type BookingStatus =
+  | 'HOLD'
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'CHECKED_IN'
+  | 'CHECKED_OUT'
+  | 'CANCELLED';
+
+export type PaymentStatus = 'UNPAID' | 'PAID' | 'FAILED' | 'REFUNDED';
+
+export interface Payment {
+  id: string;
+  stripeId: string | null;
+  amount: string;
+  status: PaymentStatus;
+}
 
 export interface Booking {
   id: string;
@@ -14,6 +29,9 @@ export interface Booking {
   totalPrice: string;
   guestCount: number;
   status: BookingStatus;
+  paymentStatus: PaymentStatus;
+  holdUntil: string | null;
+  payment: Payment | null;
   review: { id: string } | null;
   createdAt: string;
 }

@@ -11,17 +11,21 @@ import { MapPin, CalendarDays, Users, CheckCircle, XCircle, Loader2 } from "luci
 import { toast } from "sonner";
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
+  HOLD: "Đang giữ chỗ",
   PENDING: "Chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đang ở",
+  CHECKED_OUT: "Đã trả phòng",
   CANCELLED: "Đã hủy",
-  COMPLETED: "Hoàn thành",
 };
 
 const STATUS_COLOR: Record<BookingStatus, string> = {
+  HOLD: "bg-blue-50 text-blue-700 border-blue-200",
   PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
   CONFIRMED: "bg-green-50 text-green-700 border-green-200",
+  CHECKED_IN: "bg-teal-50 text-teal-700 border-teal-200",
+  CHECKED_OUT: "bg-slate-100 text-slate-600 border-slate-200",
   CANCELLED: "bg-red-50 text-red-700 border-red-200",
-  COMPLETED: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 const formatDate = (d: string) =>

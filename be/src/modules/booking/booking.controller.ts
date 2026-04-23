@@ -29,10 +29,7 @@ export class BookingController {
 
   // POST /bookings — Step 1: create HOLD
   @Post()
-  hold(
-    @CurrentUser() user: { id: string },
-    @Body() dto: CreateBookingDto,
-  ) {
+  hold(@CurrentUser() user: { id: string }, @Body() dto: CreateBookingDto) {
     return this.bookingService.hold(user.id, dto);
   }
 
@@ -85,10 +82,7 @@ export class BookingController {
 
   // GET /bookings/:id
   @Get(':id')
-  findOne(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  findOne(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.bookingService.findOne(id, user.id);
   }
 }

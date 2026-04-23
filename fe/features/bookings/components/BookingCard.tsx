@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,10 +8,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Clock } from "lucide-react";
 import { Listing } from "@/types/listing";
 import { useAuthStore } from "@/stores/authStore";
-import { useCreateBooking } from "@/features/bookings/hooks/useBookings";
+import { useHoldBooking } from "@/features/bookings/hooks/useBookings";
 import Link from "next/link";
 
 interface BookingCardProps {
@@ -45,7 +44,7 @@ const today = new Date().toISOString().split("T")[0];
 export function BookingCard({ listing, isOwner }: BookingCardProps) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { mutate: createBooking, isPending } = useCreateBooking();
+  const { mutate: holdBooking, isPending } = useHoldBooking();
 
   const {
     register,
@@ -71,7 +70,7 @@ export function BookingCard({ listing, isOwner }: BookingCardProps) {
   const totalPrice = nights * Number(listing.price);
 
   const onSubmit = (values: BookingValues) => {
-    createBooking(
+    holdBooking(
       {
         listingId: listing.id,
         checkIn: values.checkIn,
@@ -79,15 +78,15 @@ export function BookingCard({ listing, isOwner }: BookingCardProps) {
         guestCount: Number(values.guestCount),
       },
       {
-        onSuccess: () => {
-          toast.success("Đặt phòng thành công! Chờ xác nhận từ chủ nhà.");
-          router.push("/bookings");
+        onSuccess: (booking) => {
+          toast.success("Chỗ đã được giữ! Vui lòng thanh toán trong 5 phút.");
+          router.push(`/bookings/${booking.id}/payment`);
         },
         onError: (err: unknown) => {
           const msg = (
             err as { response?: { data?: { message?: string } } }
           )?.response?.data?.message;
-          toast.error(msg ?? "Đặt phòng thất bại. Vui lòng thử lại.");
+          toast.error(msg ?? "Không thể giữ chỗ. Vui lòng thử lại.");
         },
       }
     );
@@ -187,9 +186,17 @@ export function BookingCard({ listing, isOwner }: BookingCardProps) {
             disabled={isPending}
             className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold shadow-md shadow-orange-500/20 rounded-xl h-12 text-base"
           >
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Đặt phòng ngay
+            {isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Clock className="h-4 w-4 mr-2" />
+            )}
+            Giữ chỗ ngay
           </Button>
+
+          <p className="text-xs text-slate-400 text-center">
+            Chỗ sẽ được giữ trong 5 phút để bạn hoàn tất thanh toán
+          </p>
         </form>
       )}
     </div>

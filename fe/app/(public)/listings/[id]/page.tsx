@@ -568,7 +568,7 @@ export default function ListingDetailPage({ params }: PageProps) {
             </div>
 
             {/* Right column – booking card */}
-            <div className="lg:col-span-1">
+            <div id="booking-form" className="lg:col-span-1">
               <div className="sticky top-8">
                 <BookingCard listing={listing} isOwner={isOwner} />
               </div>
@@ -583,7 +583,7 @@ export default function ListingDetailPage({ params }: PageProps) {
           <div>
             <p className="text-lg font-bold text-slate-900">
               {listing.price != null
-                ? `₫${listing.price.toLocaleString("vi-VN")}`
+                ? `₫${Number(listing.price).toLocaleString("vi-VN")}`
                 : "Liên hệ"}
               <span className="text-sm font-normal text-slate-500"> / đêm</span>
             </p>
@@ -595,7 +595,10 @@ export default function ListingDetailPage({ params }: PageProps) {
               )}
             </div>
           </div>
-          <button className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-7 py-3 rounded-full font-bold shadow-lg hover:from-orange-600 hover:to-amber-600 transition-all active:scale-95">
+          <button
+            onClick={() => document.getElementById("booking-form")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-7 py-3 rounded-full font-bold shadow-lg hover:from-orange-600 hover:to-amber-600 transition-all active:scale-95"
+          >
             Đặt ngay
           </button>
         </div>

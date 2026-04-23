@@ -23,7 +23,9 @@ export class ReviewsService {
     if (booking.guestId !== guestId)
       throw new ForbiddenException('Không có quyền review booking này');
     if (booking.status !== BookingStatus.CHECKED_OUT)
-      throw new BadRequestException('Chỉ được review sau khi khách đã check-out');
+      throw new BadRequestException(
+        'Chỉ được review sau khi khách đã check-out',
+      );
 
     const existing = await this.prisma.review.findUnique({
       where: { bookingId: dto.bookingId },

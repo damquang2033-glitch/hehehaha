@@ -25,11 +25,7 @@ export class ChatService {
     });
   }
 
-  async saveMessage(
-    conversationId: string,
-    senderId: string,
-    content: string,
-  ) {
+  async saveMessage(conversationId: string, senderId: string, content: string) {
     return this.prisma.message.create({
       data: { conversationId, senderId, content },
       include: {
