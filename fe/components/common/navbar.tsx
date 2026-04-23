@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, User, LogOut, Home, CalendarDays, PlusCircle, Star } from "lucide-react";
+import { Menu, X, User, LogOut, Home, CalendarDays, PlusCircle, Star, BedDouble, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -196,6 +196,18 @@ export function Navbar() {
                           Quản lý Host
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
+                          <Link href="/host" className="cursor-pointer">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            Dashboard Host
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/host/listings" className="cursor-pointer">
+                            <BedDouble className="mr-2 h-4 w-4" />
+                            Quản lý chỗ ở
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link href="/host/listings/new" className="cursor-pointer">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Đăng chỗ ở mới
@@ -322,6 +334,18 @@ export function Navbar() {
 
                     {(user?.role === "HOST" || user?.role === "ADMIN") && (
                       <>
+                        <Link href="/host" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard Host
+                          </Button>
+                        </Link>
+                        <Link href="/host/listings" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
+                            <BedDouble className="h-4 w-4" />
+                            Quản lý chỗ ở
+                          </Button>
+                        </Link>
                         <Link href="/host/listings/new" onClick={() => setMobileMenuOpen(false)}>
                           <Button variant="ghost" className="w-full justify-start gap-2 text-slate-600 dark:text-slate-300">
                             <PlusCircle className="h-4 w-4" />

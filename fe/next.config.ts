@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "stayzy-listings-prod-quang-2026.s3.ap-southeast-1.amazonaws.com",
+      },
     ],
   },
 };

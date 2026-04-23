@@ -1,11 +1,13 @@
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   IsUrl,
+  Max,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -73,4 +75,23 @@ export class CreateListingDto {
   @IsString()
   @IsOptional()
   structure?: string;
+
+  // ── Booking config ──────────────────────────────────────────────────────
+
+  @IsBoolean()
+  @IsOptional()
+  instantBooking?: boolean;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  freeCancelBeforeHours?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  partialRefundPercent?: number;
 }

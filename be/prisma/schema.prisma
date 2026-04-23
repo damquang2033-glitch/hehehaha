@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
 enum Role {
   GUEST
   HOST
@@ -14,11 +16,22 @@ enum Role {
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
+  HOLD        // Tạm giữ phòng (5-10 phút)
+  PENDING     // Đã thanh toán, chờ host confirm
+  CONFIRMED   // Host đã confirm
+  CHECKED_IN  // Khách đã check-in
+  CHECKED_OUT // Khách đã check-out
+  CANCELLED   // Đã hủy
 }
+
+enum PaymentStatus {
+  UNPAID    // Chưa thanh toán
+  PAID      // Đã thanh toán
+  FAILED    // Thanh toán thất bại
+  REFUNDED  // Đã hoàn tiền
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
   id           String    @id @default(cuid())
@@ -28,54 +41,99 @@ model User {
   avatar       String?
   role         Role      @default(GUEST)
   refreshToken String?
-  listings     Listing[]
-  bookings     Booking[]
-  reviews      Review[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+
+  listings           Listing[]
+  bookings           Booking[]
+  reviews            Review[]
+  guestConversations Conversation[] @relation("GuestConversations")
+  hostConversations  Conversation[] @relation("HostConversations")
+  sentMessages       Message[]      @relation("SentMessages")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
 model Listing {
-  id           String    @id @default(cuid())
-  title        String
-  description  String
-  price        Decimal
-  location     String
-  images       String[]
-  maxGuests    Int?
-  bedrooms     Int?
-  beds         Int?
-  bathrooms    Int?
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Decimal
+  location    String
+  images      String[]
+
+  maxGuests Int?
+  bedrooms  Int?
+  beds      Int?
+  bathrooms Int?
+
   amenities    String[]
   propertyType String?
   rentalType   String?
   structure    String?
-  hostId       String
-  host         User      @relation(fields: [hostId], references: [id])
-  bookings     Booking[]
-  reviews      Review[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+
+  // Booking config
+  instantBooking        Boolean @default(false)
+  freeCancelBeforeHours Int     @default(24)
+  partialRefundPercent  Int     @default(0)
+
+  hostId String
+  host   User   @relation(fields: [hostId], references: [id])
+
+  bookings      Booking[]
+  reviews       Review[]
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id         String        @id @default(cuid())
-  listingId  String
-  listing    Listing       @relation(fields: [listingId], references: [id])
-  guestId    String
-  guest      User          @relation(fields: [guestId], references: [id])
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+  guestId   String
+  guest     User    @relation(fields: [guestId], references: [id])
+
   checkIn    DateTime
   checkOut   DateTime
   totalPrice Decimal
   guestCount Int
-  status     BookingStatus @default(PENDING)
-  review     Review?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+
+  status    BookingStatus @default(HOLD)
+  holdUntil DateTime?
+
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentIntentId String?
+  refundAmount    Decimal?
+
+  review  Review?
+  payment Payment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("bookings")
+}
+
+model Payment {
+  id        String  @id @default(cuid())
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  amount   Decimal
+  currency String  @default("vnd")
+
+  stripeId     String?       @unique
+  status       PaymentStatus
+  refundAmount Decimal?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
 }
 
 model Review {
@@ -92,4 +150,36 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@map("reviews")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  guestId   String
+  guest     User     @relation("GuestConversations", fields: [guestId], references: [id])
+  hostId    String
+  host      User     @relation("HostConversations", fields: [hostId], references: [id])
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id])
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guestId, hostId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  content        String
+  readAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("messages")
 }

@@ -4,22 +4,72 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CheckAvailabilityDto } from './dto/check-availability.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import {
+  assertTransition,
+  BLOCKING_STATUSES,
+  BookingActor,
+} from './booking.state-machine';
+
+const HOLD_MINUTES = 10;
 
 const BOOKING_INCLUDE = {
-  listing: { select: { id: true, title: true, location: true, images: true, price: true } },
+  listing: {
+    select: {
+      id: true,
+      title: true,
+      location: true,
+      images: true,
+      price: true,
+      instantBooking: true,
+      freeCancelBeforeHours: true,
+      partialRefundPercent: true,
+    },
+  },
   guest: { select: { id: true, name: true, email: true, avatar: true } },
   review: { select: { id: true } },
-} as const;
+  payment: { select: { id: true, status: true, amount: true } },
+} as const satisfies Prisma.BookingInclude;
 
 @Injectable()
 export class BookingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(guestId: string, dto: CreateBookingDto) {
+  // ── 1. Check availability ──────────────────────────────────────────────────
+
+  async checkAvailability(dto: CheckAvailabilityDto) {
+    const checkIn = new Date(dto.checkIn);
+    const checkOut = new Date(dto.checkOut);
+    const now = new Date();
+
+    const conflict = await this.prisma.booking.findFirst({
+      where: {
+        listingId: dto.listingId,
+        OR: [
+          // Firm bookings that always block
+          { status: { in: BLOCKING_STATUSES } },
+          // Active HOLDs (not yet expired)
+          { status: BookingStatus.HOLD, holdUntil: { gt: now } },
+        ],
+        AND: [{ checkIn: { lt: checkOut } }, { checkOut: { gt: checkIn } }],
+      },
+      select: { id: true, status: true, holdUntil: true },
+    });
+
+    return { available: !conflict };
+  }
+
+  // ── 2. Hold (create booking) ───────────────────────────────────────────────
+  //
+  // Uses a PostgreSQL advisory lock (pg_advisory_xact_lock) inside a
+  // transaction to serialise concurrent holds for the same listing.
+  // This guarantees no two requests can pass the conflict-check simultaneously.
+
+  async hold(guestId: string, dto: CreateBookingDto) {
     const checkIn = new Date(dto.checkIn);
     const checkOut = new Date(dto.checkOut);
 
@@ -30,41 +80,219 @@ export class BookingService {
       throw new BadRequestException('Ngày nhận phòng không được ở quá khứ');
     }
 
-    const listing = await this.prisma.listing.findUnique({
-      where: { id: dto.listingId },
-    });
-    if (!listing) throw new NotFoundException('Listing not found');
-    if (listing.hostId === guestId) {
-      throw new BadRequestException('Không thể đặt phòng của chính mình');
-    }
-    if (listing.maxGuests && dto.guestCount > listing.maxGuests) {
-      throw new BadRequestException(`Tối đa ${listing.maxGuests} khách`);
-    }
+    const holdUntil = new Date(Date.now() + HOLD_MINUTES * 60_000);
 
-    const conflict = await this.prisma.booking.findFirst({
-      where: {
-        listingId: dto.listingId,
-        status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
-        AND: [{ checkIn: { lt: checkOut } }, { checkOut: { gt: checkIn } }],
-      },
-    });
-    if (conflict) throw new BadRequestException('Chỗ ở đã được đặt trong khoảng thời gian này');
+    return this.prisma.$transaction(async (tx) => {
+      // Acquire an exclusive per-listing advisory lock for this transaction.
+      // Any concurrent transaction holding the same key will wait here.
+      // Lock is automatically released when the transaction ends.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(1, hashtext(${dto.listingId}))`;
 
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / 86_400_000);
-    const totalPrice = listing.price.toNumber() * nights;
+      const listing = await tx.listing.findUnique({
+        where: { id: dto.listingId },
+      });
+      if (!listing) throw new NotFoundException('Listing not found');
+      if (listing.hostId === guestId) {
+        throw new BadRequestException('Không thể đặt phòng của chính mình');
+      }
+      if (listing.maxGuests && dto.guestCount > listing.maxGuests) {
+        throw new BadRequestException(`Tối đa ${listing.maxGuests} khách`);
+      }
 
-    return this.prisma.booking.create({
-      data: {
-        listingId: dto.listingId,
-        guestId,
-        checkIn,
-        checkOut,
-        guestCount: dto.guestCount,
-        totalPrice,
-      },
-      include: BOOKING_INCLUDE,
+      // Conflict check — inside the lock, so it's race-condition-free
+      const now = new Date();
+      const conflict = await tx.booking.findFirst({
+        where: {
+          listingId: dto.listingId,
+          OR: [
+            { status: { in: BLOCKING_STATUSES } },
+            { status: BookingStatus.HOLD, holdUntil: { gt: now } },
+          ],
+          AND: [{ checkIn: { lt: checkOut } }, { checkOut: { gt: checkIn } }],
+        },
+        select: { id: true },
+      });
+      if (conflict) {
+        throw new BadRequestException(
+          'Phòng đã được đặt hoặc đang được giữ trong khoảng thời gian này',
+        );
+      }
+
+      const nights = Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / 86_400_000,
+      );
+      const totalPrice = listing.price.toNumber() * nights;
+
+      return tx.booking.create({
+        data: {
+          listingId: dto.listingId,
+          guestId,
+          checkIn,
+          checkOut,
+          guestCount: dto.guestCount,
+          totalPrice,
+          status: BookingStatus.HOLD,
+          holdUntil,
+          paymentStatus: PaymentStatus.UNPAID,
+        },
+        include: BOOKING_INCLUDE,
+      });
     });
   }
+
+  // ── 3. Initiate payment ────────────────────────────────────────────────────
+  //
+  // Returns a client-side token the frontend uses to complete payment.
+  // The booking must be an active HOLD (not expired).
+
+  async initiatePayment(bookingId: string, guestId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { listing: { select: { title: true } } },
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.guestId !== guestId) throw new ForbiddenException('Access denied');
+    if (booking.status !== BookingStatus.HOLD) {
+      throw new BadRequestException('Chỉ có thể thanh toán booking đang ở trạng thái HOLD');
+    }
+    if (booking.holdUntil && booking.holdUntil < new Date()) {
+      throw new BadRequestException(
+        'Booking đã hết hạn giữ phòng. Vui lòng tạo booking mới',
+      );
+    }
+
+    // --- Mock payment intent (replace with Stripe in production) ---
+    const paymentIntentId = `mock_pi_${Date.now()}`;
+    const clientSecret = `${paymentIntentId}_secret`;
+
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { paymentIntentId },
+    });
+
+    return {
+      bookingId,
+      paymentIntentId,
+      clientSecret,
+      amount: booking.totalPrice,
+      currency: 'vnd',
+    };
+  }
+
+  // ── 4. Payment webhook ─────────────────────────────────────────────────────
+  //
+  // Called by Stripe (or mock) after payment is processed.
+  // HOLD → PENDING, then optionally → CONFIRMED if instantBooking = true.
+
+  async handlePaymentWebhook(paymentIntentId: string, success: boolean) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { paymentIntentId },
+      include: { listing: { select: { instantBooking: true, title: true } } },
+    });
+    if (!booking) throw new NotFoundException('Booking not found for this payment');
+
+    if (!success) {
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: { paymentStatus: PaymentStatus.FAILED },
+      });
+      return { message: 'Payment failed, booking stays as HOLD' };
+    }
+
+    // Determine target status
+    const nextStatus: BookingStatus = booking.listing.instantBooking
+      ? BookingStatus.CONFIRMED
+      : BookingStatus.PENDING;
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: nextStatus,
+          paymentStatus: PaymentStatus.PAID,
+          holdUntil: null, // clear hold expiry
+        },
+        include: BOOKING_INCLUDE,
+      });
+
+      // Create Payment record
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: booking.totalPrice,
+          currency: 'vnd',
+          stripeId: paymentIntentId,
+          status: PaymentStatus.PAID,
+        },
+      });
+
+      return updated;
+    });
+  }
+
+  // ── 5. Update status (manual by guest / host) ──────────────────────────────
+
+  async updateStatus(
+    id: string,
+    userId: string,
+    dto: UpdateBookingStatusDto,
+  ) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: {
+        listing: {
+          select: {
+            hostId: true,
+            freeCancelBeforeHours: true,
+            partialRefundPercent: true,
+          },
+        },
+        payment: { select: { stripeId: true } },
+      },
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    const isHost = booking.listing.hostId === userId;
+    const isGuest = booking.guestId === userId;
+    if (!isHost && !isGuest) throw new ForbiddenException('Access denied');
+
+    const actor: BookingActor = isHost ? 'host' : 'guest';
+    assertTransition(booking.status, dto.status, actor);
+
+    // Cancellation: compute refund
+    let refundAmount: number | undefined;
+    if (dto.status === BookingStatus.CANCELLED) {
+      refundAmount = this.computeRefund(booking);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id },
+        data: {
+          status: dto.status,
+          ...(refundAmount !== undefined && { refundAmount }),
+          ...(refundAmount && refundAmount > 0
+            ? { paymentStatus: PaymentStatus.REFUNDED }
+            : {}),
+        },
+        include: BOOKING_INCLUDE,
+      });
+
+      // Update Payment record if refund
+      if (refundAmount && refundAmount > 0) {
+        await tx.payment.updateMany({
+          where: { bookingId: id },
+          data: { refundAmount, status: PaymentStatus.REFUNDED },
+        });
+        // TODO: trigger actual Stripe refund via PaymentService
+      }
+
+      return updated;
+    });
+  }
+
+  // ── 6. List queries ────────────────────────────────────────────────────────
 
   async findMyBookings(guestId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
@@ -96,31 +324,71 @@ export class BookingService {
     return { data, total, page, limit };
   }
 
-  async updateStatus(id: string, userId: string, dto: UpdateBookingStatusDto) {
+  async findOne(id: string, userId: string) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
-      include: { listing: { select: { hostId: true } } },
+      include: BOOKING_INCLUDE,
     });
     if (!booking) throw new NotFoundException('Booking not found');
 
-    const isHost = booking.listing.hostId === userId;
-    const isGuest = booking.guestId === userId;
+    const canView =
+      booking.guestId === userId ||
+      (booking.listing as { hostId?: string }).hostId === undefined
+        ? false
+        : true;
 
-    if (!isHost && !isGuest) throw new ForbiddenException('Access denied');
-
-    // Guest chỉ được cancel
-    if (isGuest && dto.status !== BookingStatus.CANCELLED) {
-      throw new ForbiddenException('Guest chỉ có thể hủy booking');
-    }
-    // Host không được tự set COMPLETED (chỉ system sau check-out)
-    if (isHost && dto.status === BookingStatus.COMPLETED) {
-      throw new ForbiddenException('Không thể tự đánh dấu completed');
-    }
-
-    return this.prisma.booking.update({
+    // Re-fetch with host relation to check ownership
+    const full = await this.prisma.booking.findUnique({
       where: { id },
-      data: { status: dto.status },
-      include: BOOKING_INCLUDE,
+      include: {
+        ...BOOKING_INCLUDE,
+        listing: { select: { ...BOOKING_INCLUDE.listing.select, hostId: true } },
+      },
     });
+    if (!full) throw new NotFoundException('Booking not found');
+
+    const isInvolved =
+      full.guestId === userId ||
+      (full.listing as { hostId: string }).hostId === userId;
+    if (!isInvolved) throw new ForbiddenException('Access denied');
+
+    return full;
+  }
+
+  // ── 7. Cron: expire stale HOLDs ───────────────────────────────────────────
+
+  async expireStaleHolds(): Promise<number> {
+    const result = await this.prisma.booking.updateMany({
+      where: {
+        status: BookingStatus.HOLD,
+        holdUntil: { lt: new Date() },
+      },
+      data: { status: BookingStatus.CANCELLED },
+    });
+    return result.count;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  private computeRefund(
+    booking: {
+      totalPrice: { toNumber(): number };
+      checkIn: Date;
+      paymentStatus: PaymentStatus;
+      listing: { freeCancelBeforeHours: number; partialRefundPercent: number };
+    },
+  ): number {
+    if (booking.paymentStatus !== PaymentStatus.PAID) return 0;
+
+    const hoursUntilCheckIn =
+      (booking.checkIn.getTime() - Date.now()) / 3_600_000;
+
+    if (hoursUntilCheckIn >= booking.listing.freeCancelBeforeHours) {
+      return booking.totalPrice.toNumber(); // 100% refund
+    }
+    return (
+      booking.totalPrice.toNumber() *
+      (booking.listing.partialRefundPercent / 100)
+    );
   }
 }

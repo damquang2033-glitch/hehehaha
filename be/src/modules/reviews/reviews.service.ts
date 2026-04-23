@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -21,8 +22,8 @@ export class ReviewsService {
     if (!booking) throw new NotFoundException('Booking không tồn tại');
     if (booking.guestId !== guestId)
       throw new ForbiddenException('Không có quyền review booking này');
-    if (booking.status !== 'COMPLETED')
-      throw new BadRequestException('Chỉ được review sau khi booking hoàn thành');
+    if (booking.status !== BookingStatus.CHECKED_OUT)
+      throw new BadRequestException('Chỉ được review sau khi khách đã check-out');
 
     const existing = await this.prisma.review.findUnique({
       where: { bookingId: dto.bookingId },
