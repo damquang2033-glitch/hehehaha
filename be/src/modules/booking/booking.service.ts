@@ -39,7 +39,7 @@ const BOOKING_INCLUDE = {
 export class BookingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── 1. Check availability ──────────────────────────────────────────────────
+  // ── 1. Kiểm tra phòng trống ──────────────────────────────────────────────────
 
   async checkAvailability(dto: CheckAvailabilityDto) {
     const checkIn = new Date(dto.checkIn);
@@ -63,11 +63,13 @@ export class BookingService {
     return { available: !conflict };
   }
 
-  // ── 2. Hold (create booking) ───────────────────────────────────────────────
+  // ── 2. Giữ phòng (tạo booking tạm thời) ───────────────────────────────
   //
-  // Uses a PostgreSQL advisory lock (pg_advisory_xact_lock) inside a
-  // transaction to serialise concurrent holds for the same listing.
-  // This guarantees no two requests can pass the conflict-check simultaneously.
+  // Sử dụng PostgreSQL advisory lock (pg_advisory_xact_lock) bên trong
+  // một transaction để xử lý tuần tự (serialize) các request giữ phòng
+  // đồng thời cho cùng một listing.
+  // Điều này đảm bảo không có hai request nào có thể cùng lúc vượt qua
+  // bước kiểm tra xung đột (conflict-check).
 
   async hold(guestId: string, dto: CreateBookingDto) {
     const checkIn = new Date(dto.checkIn);
@@ -76,7 +78,9 @@ export class BookingService {
     if (checkIn >= checkOut) {
       throw new BadRequestException('Ngày trả phòng phải sau ngày nhận phòng');
     }
-    if (checkIn < new Date()) {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    if (checkIn < today) {
       throw new BadRequestException('Ngày nhận phòng không được ở quá khứ');
     }
 
