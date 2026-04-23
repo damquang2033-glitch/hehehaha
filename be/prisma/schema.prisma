@@ -104,9 +104,10 @@ model Booking {
   status    BookingStatus @default(HOLD)
   holdUntil DateTime?
 
-  paymentStatus   PaymentStatus @default(UNPAID)
-  paymentIntentId String?
-  refundAmount    Decimal?
+  paymentStatus    PaymentStatus @default(UNPAID)
+  paymentIntentId  String?
+  stripeSessionId  String?       @unique
+  refundAmount     Decimal?
 
   review  Review?
   payment Payment?
