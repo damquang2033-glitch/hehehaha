@@ -40,7 +40,7 @@ export default function EditListingPage({ params }: PageProps) {
     deleteListing(id, {
       onSuccess: () => {
         toast.success("Đã xóa chỗ ở.");
-        router.push("/rooms");
+        router.push("/host/listings");
       },
       onError: () => {
         toast.error("Xóa thất bại. Vui lòng thử lại.");
@@ -65,11 +65,11 @@ export default function EditListingPage({ params }: PageProps) {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Link
-          href={`/listings/${id}`}
+          href="/host/listings"
           className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-orange-600 transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
-          Quay lại chi tiết
+          Quay lại danh sách
         </Link>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-8">

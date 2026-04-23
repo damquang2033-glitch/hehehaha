@@ -132,7 +132,7 @@ export default function HostDashboardPage() {
                 <p className="text-sm text-slate-500 dark:text-slate-400">Xem, sửa và thêm mới</p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/host/listings/new">Xem</Link>
+                <Link href="/host/listings">Xem</Link>
               </Button>
             </CardContent>
           </Card>
