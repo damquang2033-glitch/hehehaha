@@ -13,7 +13,6 @@ export type PaymentStatus = 'UNPAID' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export interface Payment {
   id: string;
-  stripeId: string | null;
   amount: string;
   status: PaymentStatus;
 }

@@ -33,13 +33,10 @@ export class BookingController {
     return this.bookingService.hold(user.id, dto);
   }
 
-  // POST /bookings/:id/pay — Step 2: get payment intent for HOLD
+  // POST /bookings/:id/pay — Step 2: fake-pay and confirm HOLD
   @Post(':id/pay')
-  initiatePayment(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
-    return this.bookingService.initiatePayment(id, user.id);
+  fakePay(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    return this.bookingService.fakePay(id, user.id);
   }
 
   // PATCH /bookings/:id/status — Manual status transitions (guest/host)

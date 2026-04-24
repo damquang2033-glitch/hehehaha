@@ -59,14 +59,6 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  STRIPE_SECRET_KEY?: string;
-
-  @IsString()
-  @IsOptional()
-  STRIPE_WEBHOOK_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
   FRONTEND_URL?: string;
 }
 

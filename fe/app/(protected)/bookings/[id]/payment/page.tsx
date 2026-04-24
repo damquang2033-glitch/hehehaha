@@ -16,7 +16,7 @@ import {
   CreditCard,
   MapPin,
 } from "lucide-react";
-import { useBooking, useInitiatePayment, useTriggerMockWebhook } from "@/features/bookings/hooks/useBookings";
+import { useBooking, useFakePay } from "@/features/bookings/hooks/useBookings";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -59,15 +59,11 @@ export default function PaymentPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { data: booking, isLoading, isError } = useBooking(id);
-  const { mutate: initiatePayment, isPending: isInitiating } = useInitiatePayment();
-  const { mutate: triggerWebhook, isPending: isWebhooking } = useTriggerMockWebhook();
-  const [step, setStep] = useState<"review" | "paying">("review");
+  const { mutate: fakePay, isPending } = useFakePay();
 
   const { secondsLeft, display } = useCountdown(booking?.holdUntil ?? null);
   const isExpired = secondsLeft === 0 && !!booking?.holdUntil;
-  const isPaying = isInitiating || isWebhooking;
 
-  // Redirect away if booking is not in HOLD state
   useEffect(() => {
     if (!booking) return;
     if (booking.status === "CONFIRMED" || booking.status === "PENDING") {
@@ -80,31 +76,15 @@ export default function PaymentPage({ params }: PageProps) {
   }, [booking, id, router]);
 
   const handlePay = () => {
-    setStep("paying");
-    initiatePayment(id, {
-      onSuccess: (updatedBooking) => {
-        const paymentIntentId = updatedBooking.payment?.stripeId;
-        if (!paymentIntentId) {
-          toast.error("Lỗi khởi tạo thanh toán.");
-          setStep("review");
-          return;
-        }
-        triggerWebhook(paymentIntentId, {
-          onSuccess: () => {
-            toast.success("Thanh toán thành công!");
-            router.push(`/bookings/${id}/confirmation`);
-          },
-          onError: () => {
-            toast.error("Xác nhận thanh toán thất bại.");
-            setStep("review");
-          },
-        });
+    fakePay(id, {
+      onSuccess: () => {
+        toast.success("Thanh toán thành công!");
+        router.push(`/bookings/${id}/confirmation`);
       },
       onError: (err: unknown) => {
         const msg = (err as { response?: { data?: { message?: string } } })
           ?.response?.data?.message;
-        toast.error(msg ?? "Khởi tạo thanh toán thất bại.");
-        setStep("review");
+        toast.error(msg ?? "Thanh toán thất bại.");
       },
     });
   };
@@ -209,10 +189,10 @@ export default function PaymentPage({ params }: PageProps) {
       {/* Payment button */}
       <Button
         onClick={handlePay}
-        disabled={isPaying || isExpired || step === "paying"}
+        disabled={isPending || isExpired}
         className="w-full h-14 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/20 rounded-xl"
       >
-        {isPaying ? (
+        {isPending ? (
           <>
             <Loader2 className="h-5 w-5 mr-2 animate-spin" />
             Đang xử lý...

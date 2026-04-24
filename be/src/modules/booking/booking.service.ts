@@ -144,15 +144,15 @@ export class BookingService {
     });
   }
 
-  // ── 3. Initiate payment ────────────────────────────────────────────────────
+  // ── 3. Fake pay ────────────────────────────────────────────────────────────
   //
-  // Returns a client-side token the frontend uses to complete payment.
-  // The booking must be an active HOLD (not expired).
+  // Immediately confirms a HOLD booking without a real payment gateway.
+  // HOLD → CONFIRMED (instantBooking) or HOLD → PENDING (host must approve).
 
-  async initiatePayment(bookingId: string, guestId: string) {
+  async fakePay(bookingId: string, guestId: string) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { listing: { select: { title: true } } },
+      include: { listing: { select: { instantBooking: true } } },
     });
 
     if (!booking) throw new NotFoundException('Booking not found');
@@ -169,68 +169,28 @@ export class BookingService {
       );
     }
 
-    // --- Mock payment intent (replace with Stripe in production) ---
-    const paymentIntentId = `mock_pi_${Date.now()}`;
-    const clientSecret = `${paymentIntentId}_secret`;
-
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: { paymentIntentId },
-    });
-
-    return {
-      bookingId,
-      paymentIntentId,
-      clientSecret,
-      amount: booking.totalPrice,
-      currency: 'vnd',
-    };
-  }
-
-  // ── 4. Payment webhook ─────────────────────────────────────────────────────
-  //
-  // Called by Stripe (or mock) after payment is processed.
-  // HOLD → PENDING, then optionally → CONFIRMED if instantBooking = true.
-
-  async handlePaymentWebhook(paymentIntentId: string, success: boolean) {
-    const booking = await this.prisma.booking.findFirst({
-      where: { paymentIntentId },
-      include: { listing: { select: { instantBooking: true, title: true } } },
-    });
-    if (!booking)
-      throw new NotFoundException('Booking not found for this payment');
-
-    if (!success) {
-      await this.prisma.booking.update({
-        where: { id: booking.id },
-        data: { paymentStatus: PaymentStatus.FAILED },
-      });
-      return { message: 'Payment failed, booking stays as HOLD' };
-    }
-
-    // Determine target status
+    const fakePaymentId = `fake_pay_${Date.now()}`;
     const nextStatus: BookingStatus = booking.listing.instantBooking
       ? BookingStatus.CONFIRMED
       : BookingStatus.PENDING;
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.booking.update({
-        where: { id: booking.id },
+        where: { id: bookingId },
         data: {
           status: nextStatus,
           paymentStatus: PaymentStatus.PAID,
-          holdUntil: null, // clear hold expiry
+          holdUntil: null,
         },
         include: BOOKING_INCLUDE,
       });
 
-      // Create Payment record
       await tx.payment.create({
         data: {
-          bookingId: booking.id,
+          bookingId,
           amount: booking.totalPrice,
           currency: 'vnd',
-          stripeId: paymentIntentId,
+          stripeId: fakePaymentId,
           status: PaymentStatus.PAID,
         },
       });
@@ -334,12 +294,6 @@ export class BookingService {
       include: BOOKING_INCLUDE,
     });
     if (!booking) throw new NotFoundException('Booking not found');
-
-    const canView =
-      booking.guestId === userId ||
-      (booking.listing as { hostId?: string }).hostId === undefined
-        ? false
-        : true;
 
     // Re-fetch with host relation to check ownership
     const full = await this.prisma.booking.findUnique({

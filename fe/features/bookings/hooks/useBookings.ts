@@ -39,21 +39,12 @@ export function useCreateBooking() {
   return useHoldBooking();
 }
 
-export function useInitiatePayment() {
+export function useFakePay() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => bookingsApi.initiatePayment(id),
+    mutationFn: (id: string) => bookingsApi.fakePay(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['bookings', id] });
-    },
-  });
-}
-
-export function useTriggerMockWebhook() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (paymentIntentId: string) => bookingsApi.triggerMockWebhook(paymentIntentId),
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },
   });

@@ -114,7 +114,7 @@ export default function HostBookingsPage() {
   const { data, isLoading } = useHostBookings();
 
   return (
-    <div className="container max-w-3xl py-10">
+    <div className="container max-w-3xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Quản lý booking</h1>
 
       {isLoading && (

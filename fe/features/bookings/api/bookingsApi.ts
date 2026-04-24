@@ -27,16 +27,8 @@ export const bookingsApi = {
     return data.data!;
   },
 
-  initiatePayment: async (id: string) => {
+  fakePay: async (id: string) => {
     const { data } = await apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/pay`);
-    return data.data!;
-  },
-
-  triggerMockWebhook: async (paymentIntentId: string) => {
-    const { data } = await apiClient.post<ApiResponse<Booking>>('/payments/webhook', {
-      paymentIntentId,
-      success: true,
-    });
     return data.data!;
   },
 
